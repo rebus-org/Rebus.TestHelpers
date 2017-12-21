@@ -33,7 +33,7 @@
     <DefineConstants>NETSTANDARD1_6</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Rebus.Testing\Rebus.Testing.csproj" />
+    <ProjectReference Include="..\Rebus.TestHelpers\Rebus.TestHelpers.csproj" />
     <PackageReference Include="nunit" Version="3.7.1" />
     <PackageReference Include="rebus" Version="4.0.0" />
   </ItemGroup>
