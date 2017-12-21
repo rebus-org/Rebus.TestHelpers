@@ -1,6 +1,6 @@
-# Rebus.Testing
+# Rebus.TestHelpers
 
-[![install from nuget](https://img.shields.io/nuget/v/Rebus.Testing.svg?style=flat-square)](https://www.nuget.org/packages/Rebus.Testing)
+[![install from nuget](https://img.shields.io/nuget/v/Rebus.TestHelpers.svg?style=flat-square)](https://www.nuget.org/packages/Rebus.TestHelpers)
 
 Provides testing helpers for [Rebus](https://github.com/rebus-org/Rebus).
 
