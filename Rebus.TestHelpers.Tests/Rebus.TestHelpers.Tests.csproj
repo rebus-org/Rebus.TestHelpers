@@ -35,6 +35,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Rebus.TestHelpers\Rebus.TestHelpers.csproj" />
     <PackageReference Include="nunit" Version="3.7.1" />
-    <PackageReference Include="rebus" Version="4.0.0" />
+    <PackageReference Include="rebus" Version="4.2.1" />
   </ItemGroup>
 </Project>
