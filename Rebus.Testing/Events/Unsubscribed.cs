@@ -1,6 +1,6 @@
 using System;
 
-namespace Rebus.Testing.Events
+namespace Rebus.TestHelpers.Events
 {
     /// <summary>
     /// Recorded when a subscription was revoked

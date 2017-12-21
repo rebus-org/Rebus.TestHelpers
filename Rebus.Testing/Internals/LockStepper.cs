@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Rebus.Pipeline;
 using Rebus.Transport;
 
-namespace Rebus.Testing.Internals
+namespace Rebus.TestHelpers.Internals
 {
     /// <summary>
     /// Pipeline step that makes it easy to block message processing until some particular point in time.

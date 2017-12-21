@@ -4,9 +4,9 @@ using System.IO;
 using System.Threading.Tasks;
 using Rebus.DataBus;
 using Rebus.DataBus.InMem;
-using Rebus.Testing.Internals;
+using Rebus.TestHelpers.Internals;
 
-namespace Rebus.Testing
+namespace Rebus.TestHelpers
 {
     /// <summary>
     /// Test helper that can be used to fake the presence of a configured data bus, using the given in-mem data store to store data

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Rebus.Bus.Advanced;
-using Rebus.Testing.Events;
+using Rebus.TestHelpers.Events;
 
 #pragma warning disable 1998
 
-namespace Rebus.Testing
+namespace Rebus.TestHelpers
 {
     /// <summary>
     /// The fake sync bus is an implementation of <see cref="ISyncBus"/> that can be used for testing. The fake bus

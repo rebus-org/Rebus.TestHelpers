@@ -1,7 +1,7 @@
 ﻿using System;
 using Rebus.Time;
 
-namespace Rebus.Testing.Events
+namespace Rebus.TestHelpers.Events
 {
     /// <summary>
     /// Base type of all events that a <see cref="FakeBus"/> can record.

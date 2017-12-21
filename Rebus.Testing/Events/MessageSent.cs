@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Rebus.Extensions;
 
-namespace Rebus.Testing.Events
+namespace Rebus.TestHelpers.Events
 {
     /// <summary>
     /// Base event recorded when a message was sent - actual event will be <see cref="MessageSent{TMessage}"/>

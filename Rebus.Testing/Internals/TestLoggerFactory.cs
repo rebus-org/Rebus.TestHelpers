@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Rebus.Logging;
 
-namespace Rebus.Testing.Internals
+namespace Rebus.TestHelpers.Internals
 {
     class TestLoggerFactory : AbstractRebusLoggerFactory
     {

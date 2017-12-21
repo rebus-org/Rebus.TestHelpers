@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using System.Threading;
 using Rebus.Activation;
+using Rebus.Bus;
 using Rebus.Config;
 using Rebus.Handlers;
 using Rebus.Pipeline;
 using Rebus.Sagas;
-using Rebus.Testing.Internals;
+using Rebus.TestHelpers.Internals;
 using Rebus.Transport.InMem;
-using Rebus.Bus;
-using InMemorySagaStorage = Rebus.Testing.Internals.InMemorySagaStorage;
+using InMemorySagaStorage = Rebus.TestHelpers.Internals.InMemorySagaStorage;
 
-namespace Rebus.Testing
+namespace Rebus.TestHelpers
 {
     /// <summary>
     /// Saga fixture factory class - can be used to create an appropriate <see cref="SagaFixture{TSagaHandler}"/> for a saga

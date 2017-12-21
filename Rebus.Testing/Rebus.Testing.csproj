@@ -3,7 +3,7 @@
  <PropertyGroup>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Rebus.Testing</RootNamespace>
+    <RootNamespace>Rebus.TestHelpers</RootNamespace>
     <AssemblyName>Rebus.Testing</AssemblyName>
     <TargetFrameworks>net45;netstandard1.3</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>

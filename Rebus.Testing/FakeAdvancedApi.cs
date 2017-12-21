@@ -3,7 +3,7 @@ using Rebus.Bus;
 using Rebus.Bus.Advanced;
 using Rebus.DataBus;
 
-namespace Rebus.Testing
+namespace Rebus.TestHelpers
 {
     /// <summary>
     /// Implementation of <see cref="IAdvancedApi"/> that can be used to set up fake implementations of various advanced bus APIs for running isolated tests

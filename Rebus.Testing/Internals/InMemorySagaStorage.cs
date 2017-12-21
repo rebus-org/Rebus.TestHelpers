@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Rebus.Exceptions;
 using Rebus.Sagas;
+
 #pragma warning disable 1998
 
-namespace Rebus.Testing.Internals
+namespace Rebus.TestHelpers.Internals
 {
     /// <summary>
     /// Implementation of <see cref="ISagaStorage"/> that "persists" saga data in memory. Saga data is serialized/deserialized using Newtonsoft JSON.NET

@@ -1,8 +1,7 @@
 using System;
 using System.Linq.Expressions;
-using System.Reflection;
 
-namespace Rebus.Testing.Internals
+namespace Rebus.TestHelpers.Internals
 {
     class Reflect
     {

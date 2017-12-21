@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Rebus.Extensions;
 
-namespace Rebus.Testing.Events
+namespace Rebus.TestHelpers.Events
 {
     /// <summary>
     /// Recorded when a reply message was sent

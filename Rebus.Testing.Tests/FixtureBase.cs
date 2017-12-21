@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using NUnit.Framework;
 
-namespace Rebus.Testing.Tests
+namespace Rebus.TestHelpers.Tests
 {
     public abstract class FixtureBase
     {

@@ -3,9 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Rebus.Testing.Events;
+using Rebus.TestHelpers.Events;
 
-namespace Rebus.Testing
+namespace Rebus.TestHelpers
 {
     class FakeBusEventRecorder
     {

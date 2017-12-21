@@ -2,7 +2,7 @@
 using Rebus.Logging;
 using Rebus.Time;
 
-namespace Rebus.Testing
+namespace Rebus.TestHelpers
 {
     /// <summary>
     /// Represents a log event emitted from Rebus' internals during saga testing with <see cref="SagaFixture{TSagaHandler}"/>

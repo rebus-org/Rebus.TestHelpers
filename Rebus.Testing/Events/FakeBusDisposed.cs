@@ -1,4 +1,4 @@
-﻿namespace Rebus.Testing.Events
+﻿namespace Rebus.TestHelpers.Events
 {
     /// <summary>
     /// Indicates that the bus was disposed

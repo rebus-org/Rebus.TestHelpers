@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 using Rebus.DataBus;
 using Rebus.DataBus.InMem;
 using Rebus.Time;
+
 #pragma warning disable 1998
 
-namespace Rebus.Testing.Internals
+namespace Rebus.TestHelpers.Internals
 {
     class InMemDataBusStorage : IDataBusStorage
     {
