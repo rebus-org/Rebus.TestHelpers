@@ -15,6 +15,7 @@ namespace Rebus.TestHelpers
     public class FakeDataBus : IDataBus
     {
         readonly IDataBusStorage _dataBusStorage;
+        readonly InMemDataStore _inMemDataStore;
 
         /// <summary>
         /// Establishes a fake presence of a configured data bus, using the given <see cref="InMemDataStore"/> to retrieve data
@@ -31,23 +32,18 @@ namespace Rebus.TestHelpers
         /// <summary>
         /// Creates the fake data bus, optionally using the given in-mem data store to store attachments
         /// </summary>
-        /// <param name="dataStore"></param>
-        public FakeDataBus(InMemDataStore dataStore = null)
+        public FakeDataBus()
         {
-            // if a data store was passed in, we use that
-            if (dataStore != null)
-            {
-                _dataBusStorage = new InMemDataBusStorage(dataStore);
-            }
-            // otherwise, if there is an "ambient" storage, use that
-            else if (TestBackdoor.TestDataBusStorage != null)
+            // if there is an "ambient" storage, use that
+            if (TestBackdoor.TestDataBusStorage != null)
             {
                 _dataBusStorage = TestBackdoor.TestDataBusStorage;
             }
             // last resort: just fake it in mem
             else
             {
-                _dataBusStorage = new InMemDataBusStorage(new InMemDataStore());
+                _inMemDataStore = new InMemDataStore();
+                _dataBusStorage = new InMemDataBusStorage(_inMemDataStore);
             }
         }
 
@@ -87,5 +83,7 @@ namespace Rebus.TestHelpers
                 _disposeAction();
             }
         }
+
+        internal InMemDataStore GetDataBusDataStore() => _inMemDataStore;
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Rebus.Bus.Advanced;
 using Rebus.TestHelpers.Events;
-
+using Rebus.TestHelpers.Internals;
 #pragma warning disable 1998
 
 namespace Rebus.TestHelpers
@@ -14,8 +14,20 @@ namespace Rebus.TestHelpers
     /// </summary>
     public class FakeSyncBus : ISyncBus
     {
-        readonly FakeBusEventRecorder _recorder = new FakeBusEventRecorder();
-        readonly FakeBusEventFactory _factory = new FakeBusEventFactory();
+        readonly FakeBusEventRecorder _recorder;
+        readonly FakeBusEventFactory _factory;
+
+        public FakeSyncBus()
+        {
+            _recorder = new FakeBusEventRecorder();
+            _factory = new FakeBusEventFactory();
+        }
+
+        internal FakeSyncBus(FakeBusEventRecorder recorder, FakeBusEventFactory factory)
+        {
+            _recorder = recorder;
+            _factory = factory;
+        }
 
         /// <summary>
         /// Gets all events recorded at this point. Query this in order to check what happened to the fake bus while

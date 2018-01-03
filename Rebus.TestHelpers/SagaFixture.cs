@@ -10,6 +10,7 @@ using Rebus.Sagas;
 using Rebus.TestHelpers.Internals;
 using Rebus.Transport.InMem;
 using InMemorySagaStorage = Rebus.TestHelpers.Internals.InMemorySagaStorage;
+// ReSharper disable UnusedTypeParameter
 
 namespace Rebus.TestHelpers
 {
@@ -28,7 +29,7 @@ namespace Rebus.TestHelpers
         /// </summary>
         public static SagaFixture<TSagaHandler> For<TSagaHandler>() where TSagaHandler : Saga, IHandleMessages, new()
         {
-            Func<TSagaHandler> factory = () =>
+            TSagaHandler HandlerFactory()
             {
                 try
                 {
@@ -38,9 +39,9 @@ namespace Rebus.TestHelpers
                 {
                     throw new ArgumentException($"Could not create new saga handler instance of type {typeof(TSagaHandler)}", exception);
                 }
-            };
+            }
 
-            return For(factory);
+            return For(HandlerFactory);
         }
 
         /// <summary>
@@ -78,7 +79,6 @@ namespace Rebus.TestHelpers
     {
         const string SagaInputQueueName = "sagafixture";
         readonly IBus _bus;
-        readonly InMemNetwork _network;
         readonly InMemorySagaStorage _inMemorySagaStorage;
         readonly LockStepper _lockStepper;
         readonly TestLoggerFactory _loggerFactory;
@@ -117,7 +117,7 @@ namespace Rebus.TestHelpers
         {
             if (configurerFactory == null) throw new ArgumentNullException(nameof(configurerFactory));
 
-            _network = new InMemNetwork();
+            var network = new InMemNetwork();
 
             _inMemorySagaStorage = new InMemorySagaStorage();
             _inMemorySagaStorage.Correlated += sagaData => Correlated?.Invoke(sagaData);
@@ -132,7 +132,7 @@ namespace Rebus.TestHelpers
 
             _bus = configurerFactory()
                 .Logging(l => l.Use(_loggerFactory))
-                .Transport(t => t.UseInMemoryTransport(_network, SagaInputQueueName))
+                .Transport(t => t.UseInMemoryTransport(network, SagaInputQueueName))
                 .Sagas(s => s.Register(c => _inMemorySagaStorage))
                 .Options(o =>
                 {

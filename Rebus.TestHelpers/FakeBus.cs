@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Rebus.Bus;
 using Rebus.Bus.Advanced;
+using Rebus.DataBus;
+using Rebus.DataBus.InMem;
 using Rebus.TestHelpers.Events;
+using Rebus.TestHelpers.Internals;
 
 #pragma warning disable 1998
 
@@ -18,8 +21,12 @@ namespace Rebus.TestHelpers
     {
         readonly FakeBusEventRecorder _recorder = new FakeBusEventRecorder();
         readonly FakeBusEventFactory _factory = new FakeBusEventFactory();
+        readonly FakeAdvancedApi _advanced;
 
-        IAdvancedApi _advancedApi;
+        /// <summary>
+        /// Creates the fake <see cref="IBus"/> implementation
+        /// </summary>
+        public FakeBus() => _advanced = new FakeAdvancedApi(_recorder, _factory);
 
         /// <summary>
         /// Gets all events recorded at this point. Query this in order to check what happened to the fake bus while
@@ -93,19 +100,11 @@ namespace Rebus.TestHelpers
         }
 
         /// <summary>
-        /// Gets the advanced API. An implementation of <see cref="IAdvancedApi"/> must either be passed to the contructor, or one must be set using the
-        /// <see cref="Advanced"/> property before calling the getter, otherwise an <see cref="InvalidOperationException"/> is thrown.
-        /// Check out <see cref="FakeAdvancedApi"/> for an easy way to pass your own implementations of e.g. <see cref="ISyncBus"/> etc.
+        /// Gets the advanced API
         /// </summary>
         public IAdvancedApi Advanced
         {
-            get
-            {
-                if (_advancedApi != null) return _advancedApi;
-
-                throw new InvalidOperationException("This FakeBus instance does not have an advanced API - you can add one by setting the Advanced property, e.g. to an instance of FakeAdvancedApi that you can then customize to your needs");
-            }
-            set { _advancedApi = value; }
+            get { return _advanced; }
         }
 
         /// <inheritdoc />
@@ -150,5 +149,10 @@ namespace Rebus.TestHelpers
         {
             _recorder.Record(fakeBusEvent);
         }
+
+        /// <summary>
+        /// Gets the data bus storage
+        /// </summary>
+        public InMemDataStore GetDataBusDataStore() => _advanced.GetDataBusDataStore();
     }
 }

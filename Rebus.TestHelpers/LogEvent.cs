@@ -11,13 +11,11 @@ namespace Rebus.TestHelpers
     {
         internal LogEvent(LogLevel level, string text, Exception exceptionOrNull, Type sourceType)
         {
-            if (text == null) throw new ArgumentNullException(nameof(text));
-            if (sourceType == null) throw new ArgumentNullException(nameof(sourceType));
             Time = RebusTime.Now;
             Level = level;
-            Text = text;
+            Text = text ?? throw new ArgumentNullException(nameof(text));
             ExceptionOrNull = exceptionOrNull;
-            SourceType = sourceType;
+            SourceType = sourceType ?? throw new ArgumentNullException(nameof(sourceType));
         }
 
         /// <summary>

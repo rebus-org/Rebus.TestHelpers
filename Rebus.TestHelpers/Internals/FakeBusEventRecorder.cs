@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Rebus.TestHelpers.Events;
 
-namespace Rebus.TestHelpers
+namespace Rebus.TestHelpers.Internals
 {
     class FakeBusEventRecorder
     {

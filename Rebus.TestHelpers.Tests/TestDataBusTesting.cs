@@ -22,8 +22,8 @@ namespace Rebus.TestHelpers.Tests
         [Test]
         public async Task CreateTest()
         {
-            var dataStore = new InMemDataStore();
-            var fakeBus = new FakeBus { Advanced = new FakeAdvancedApi(dataBus: new FakeDataBus(dataStore)) };
+            var fakeBus = new FakeBus();
+            var dataStore = fakeBus.GetDataBusDataStore();
             var handler = new DataBusAttachmentCreatingHandler(fakeBus);
 
             await handler.Handle("hej med dig min ven!");
@@ -50,6 +50,7 @@ namespace Rebus.TestHelpers.Tests
             {
                 _bus = bus;
             }
+
             public async Task Handle(string message)
             {
                 using (var source = new MemoryStream(Encoding.UTF8.GetBytes(message)))
