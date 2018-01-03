@@ -23,7 +23,7 @@ namespace Rebus.TestHelpers.Tests
         public async Task CreateTest()
         {
             var dataStore = new InMemDataStore();
-            var fakeBus = new TestHelpers.FakeBus { Advanced = new Testing.FakeAdvancedApi(dataBus: new Testing.FakeDataBus(dataStore)) };
+            var fakeBus = new FakeBus { Advanced = new FakeAdvancedApi(dataBus: new FakeDataBus(dataStore)) };
             var handler = new DataBusAttachmentCreatingHandler(fakeBus);
 
             await handler.Handle("hej med dig min ven!");
@@ -76,7 +76,7 @@ namespace Rebus.TestHelpers.Tests
                 {"custom-meta", "whee!!"}
             });
 
-            using (Testing.FakeDataBus.EstablishContext(dataStore))
+            using (FakeDataBus.EstablishContext(dataStore))
             {
                 await handler.Handle("this is an attachment id");
             }

@@ -4,7 +4,8 @@ using System.IO;
 using System.Threading.Tasks;
 using Rebus.DataBus;
 using Rebus.DataBus.InMem;
-using Rebus.TestHelpers.Internals;
+using Rebus.Testing;
+using InMemDataBusStorage = Rebus.TestHelpers.Internals.InMemDataBusStorage;
 
 namespace Rebus.TestHelpers
 {
@@ -13,8 +14,6 @@ namespace Rebus.TestHelpers
     /// </summary>
     public class FakeDataBus : IDataBus
     {
-        internal static IDataBusStorage TestDataBusStorage;
-
         readonly IDataBusStorage _dataBusStorage;
 
         /// <summary>
@@ -24,12 +23,9 @@ namespace Rebus.TestHelpers
         {
             if (dataStore == null) throw new ArgumentNullException(nameof(dataStore));
 
-            TestDataBusStorage = new InMemDataBusStorage(dataStore);
+            TestBackdoor.EnableTestMode(new InMemDataBusStorage(dataStore));
 
-            return new CleanUp(() =>
-            {
-                TestDataBusStorage = null;
-            });
+            return new CleanUp(TestBackdoor.Reset);
         }
 
         /// <summary>
@@ -44,9 +40,9 @@ namespace Rebus.TestHelpers
                 _dataBusStorage = new InMemDataBusStorage(dataStore);
             }
             // otherwise, if there is an "ambient" storage, use that
-            else if (TestDataBusStorage != null)
+            else if (TestBackdoor.TestDataBusStorage != null)
             {
-                _dataBusStorage = TestDataBusStorage;
+                _dataBusStorage = TestBackdoor.TestDataBusStorage;
             }
             // last resort: just fake it in mem
             else
