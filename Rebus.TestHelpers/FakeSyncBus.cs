@@ -17,6 +17,10 @@ namespace Rebus.TestHelpers
         readonly FakeBusEventRecorder _recorder;
         readonly FakeBusEventFactory _factory;
 
+        /// <summary>
+        /// Creates the fake sync bus with its own internal event recorder (may be used if only an <see cref="ISyncBus"/> 
+        /// implementation is needed for the test)
+        /// </summary>
         public FakeSyncBus()
         {
             _recorder = new FakeBusEventRecorder();
