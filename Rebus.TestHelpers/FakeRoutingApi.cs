@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Rebus.Bus.Advanced;
 using Rebus.Routing;
@@ -48,6 +49,21 @@ namespace Rebus.TestHelpers
             );
 
             _recorder.Record(messageSentWithRoutingSlip);
+        }
+
+        /// <inheritdoc />
+        public async Task Defer(string destinationAddress, TimeSpan delay, object explicitlyRoutedMessage, Dictionary<string, string> optionalHeaders = null)
+        {
+            var messageSentToDestination = _factory.CreateEventGeneric<MessageDeferredToDestination>(
+                typeof(MessageSentToDestination<>),
+                explicitlyRoutedMessage.GetType(),
+                destinationAddress,
+                delay,
+                explicitlyRoutedMessage,
+                optionalHeaders
+            );
+
+            _recorder.Record(messageSentToDestination);
         }
     }
 }
