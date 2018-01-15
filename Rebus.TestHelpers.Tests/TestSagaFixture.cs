@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using Rebus.Exceptions;
 using Rebus.Sagas;
-
 #pragma warning disable 1998
 
 namespace Rebus.TestHelpers.Tests
@@ -16,7 +16,7 @@ namespace Rebus.TestHelpers.Tests
         {
             using (var fixture = SagaFixture.For<MySaga>())
             {
-                fixture.Add(new MySagaState {Text = "I know you!"});
+                fixture.Add(new MySagaState { Text = "I know you!" });
                 fixture.AddRange(new[] { new MySagaState { Text = "I know you too!" } });
 
                 Assert.That(fixture.Data.Count(), Is.EqualTo(2));
@@ -102,7 +102,7 @@ namespace Rebus.TestHelpers.Tests
         [Test]
         public void DoesNotTimeOutWhenDebuggerIsAttached()
         {
-            
+
         }
 
         ///<summary>
@@ -142,11 +142,32 @@ namespace Rebus.TestHelpers.Tests
             }
         }
 
-        class MySaga : Saga<MySagaState>, IAmInitiatedBy<TestMessage>
+        [Test]
+        public void CanGetCaughtException()
+        {
+            using (var fixture = SagaFixture.For<MySaga>())
+            {
+                fixture.Deliver(new FailingTestMessage("whoohoo"));
+
+                var handlerExceptions = fixture.HandlerExceptions.ToList();
+
+                Console.WriteLine(string.Join(Environment.NewLine + Environment.NewLine, handlerExceptions));
+
+                Assert.That(handlerExceptions.Count, Is.EqualTo(1));
+
+                var exception = handlerExceptions.Single();
+
+                Assert.That(exception.Exception, Is.TypeOf<RebusApplicationException>());
+                Assert.That(exception.Exception.ToString(), Contains.Substring("oh no somethine bad happened"));
+            }
+        }
+
+        class MySaga : Saga<MySagaState>, IAmInitiatedBy<TestMessage>, IAmInitiatedBy<FailingTestMessage>
         {
             protected override void CorrelateMessages(ICorrelationConfig<MySagaState> config)
             {
                 config.Correlate<TestMessage>(m => m.Text, d => d.Text);
+                config.Correlate<FailingTestMessage>(m => m.Text, d => d.Text);
             }
 
             public async Task Handle(TestMessage message)
@@ -154,6 +175,11 @@ namespace Rebus.TestHelpers.Tests
                 Data.Text = message.Text;
 
                 if (message.Die) MarkAsComplete();
+            }
+
+            public Task Handle(FailingTestMessage message)
+            {
+                throw new RebusApplicationException("oh no somethine bad happened");
             }
         }
 
@@ -166,6 +192,16 @@ namespace Rebus.TestHelpers.Tests
 
             public string Text { get; }
             public bool Die { get; set; }
+        }
+
+        class FailingTestMessage
+        {
+            public FailingTestMessage(string text)
+            {
+                Text = text;
+            }
+
+            public string Text { get; }
         }
 
         class MySagaState : ISagaData

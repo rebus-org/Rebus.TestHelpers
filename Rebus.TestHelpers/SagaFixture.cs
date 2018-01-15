@@ -6,6 +6,7 @@ using Rebus.Bus;
 using Rebus.Config;
 using Rebus.Handlers;
 using Rebus.Pipeline;
+using Rebus.Retry.Simple;
 using Rebus.Sagas;
 using Rebus.TestHelpers.Internals;
 using Rebus.Transport.InMem;
@@ -81,6 +82,7 @@ namespace Rebus.TestHelpers
         readonly IBus _bus;
         readonly InMemorySagaStorage _inMemorySagaStorage;
         readonly LockStepper _lockStepper;
+        readonly ExceptionCollector _exceptionCollector;
         readonly TestLoggerFactory _loggerFactory;
 
         /// <summary>
@@ -128,6 +130,8 @@ namespace Rebus.TestHelpers
 
             _lockStepper = new LockStepper();
 
+            _exceptionCollector = new ExceptionCollector();
+
             _loggerFactory = new TestLoggerFactory();
 
             _bus = configurerFactory()
@@ -146,6 +150,14 @@ namespace Rebus.TestHelpers
                         return new PipelineStepConcatenator(pipeline)
                             .OnReceive(_lockStepper, PipelineAbsolutePosition.Front);
                     });
+
+                    o.Decorate<IPipeline>(c =>
+                    {
+                        var pipeline = c.Get<IPipeline>();
+
+                        return new PipelineStepInjector(pipeline)
+                            .OnReceive(_exceptionCollector, PipelineRelativePosition.After, typeof(SimpleRetryStrategyStep));
+                    });
                 })
                 .Start();
         }
@@ -159,6 +171,11 @@ namespace Rebus.TestHelpers
         /// Gets all log events emitted by the internal Rebus instance
         /// </summary>
         public IEnumerable<LogEvent> LogEvents => _loggerFactory.LogEvents;
+
+        /// <summary>
+        /// Gets all exceptions caught while handling messages
+        /// </summary>
+        public IEnumerable<HandlerException> HandlerExceptions => _exceptionCollector.CaughtExceptions;
 
         /// <summary>
         /// Delivers the given message to the saga handler

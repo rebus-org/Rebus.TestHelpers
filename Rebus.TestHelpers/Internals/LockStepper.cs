@@ -13,6 +13,7 @@ namespace Rebus.TestHelpers.Internals
     /// This is done by adding a <see cref="ManualResetEvent"/> to it, which will be set the next time
     /// a message has been processed
     /// </summary>
+    [StepDocumentation("Step that can be used to synchronize message processing")]
     class LockStepper : IIncomingStep
     {
         readonly ConcurrentQueue<ManualResetEvent> _resetEvents = new ConcurrentQueue<ManualResetEvent>();
