@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.0.0-b04
+## 5.0.0
 
 * Initial version
 * Add fake implementations of everything, including lots of new event types

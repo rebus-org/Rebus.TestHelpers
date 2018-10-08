@@ -36,13 +36,7 @@ namespace Rebus.TestHelpers.Internals
 
         static ConstructorInfo GetConstructor(Type eventType)
         {
-#if NETSTANDARD1_3
-            // TODO: BindingFlags.CreateInstance is not available on .NET Standard 1.0-1.4
-            // Should we care about it? Will it hurt us?
-            const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
-#else
             const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.CreateInstance;
-#endif
 
             var constructor = eventType.GetConstructors(flags).FirstOrDefault();
             if (constructor != null)
