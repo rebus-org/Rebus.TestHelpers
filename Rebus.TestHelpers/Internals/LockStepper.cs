@@ -25,12 +25,9 @@ namespace Rebus.TestHelpers.Internals
             var resetEvents = DequeueResetEvents();
 
             context.Load<ITransactionContext>()
-                .OnDisposed(() =>
-                {
-                    resetEvents.ForEach(resetEvent => resetEvent.Set());
-                });
+                .OnDisposed(() => resetEvents.ForEach(resetEvent => resetEvent.Set()));
 
-            await next().ConfigureAwait(false);
+            await next();
         }
 
         List<ManualResetEvent> DequeueResetEvents()

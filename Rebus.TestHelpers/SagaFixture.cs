@@ -4,8 +4,10 @@ using System.Threading;
 using Rebus.Activation;
 using Rebus.Bus;
 using Rebus.Config;
+using Rebus.Extensions;
 using Rebus.Handlers;
 using Rebus.Pipeline;
+using Rebus.Retry;
 using Rebus.Retry.Simple;
 using Rebus.Sagas;
 using Rebus.TestHelpers.Internals;
@@ -79,11 +81,16 @@ namespace Rebus.TestHelpers
     public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
     {
         const string SagaInputQueueName = "sagafixture";
+
         readonly IBus _bus;
         readonly InMemorySagaStorage _inMemorySagaStorage;
         readonly LockStepper _lockStepper;
         readonly ExceptionCollector _exceptionCollector;
         readonly TestLoggerFactory _loggerFactory;
+
+        SecondLevelDispatcher _secondLevelDispatcher;
+
+        bool _disposed;
 
         /// <summary>
         /// Event that is raised whenever a message could be successfully correlated with a saga data instance. The instance
@@ -115,6 +122,11 @@ namespace Rebus.TestHelpers
         /// </summary>
         public event Action<ISagaData> Deleted;
 
+        /// <summary>
+        /// Event raised when the saga fixture is disposed
+        /// </summary>
+        public event Action Disposed;
+
         internal SagaFixture(Func<RebusConfigurer> configurerFactory)
         {
             if (configurerFactory == null) throw new ArgumentNullException(nameof(configurerFactory));
@@ -142,6 +154,8 @@ namespace Rebus.TestHelpers
                 {
                     o.SetNumberOfWorkers(1);
                     o.SetMaxParallelism(1);
+                    
+                    o.SimpleRetryStrategy(maxDeliveryAttempts: 5, secondLevelRetriesEnabled: true);
 
                     o.Decorate<IPipeline>(c =>
                     {
@@ -157,6 +171,16 @@ namespace Rebus.TestHelpers
 
                         return new PipelineStepInjector(pipeline)
                             .OnReceive(_exceptionCollector, PipelineRelativePosition.After, typeof(SimpleRetryStrategyStep));
+                    });
+
+                    o.Decorate<IPipeline>(c =>
+                    {
+                        var pipeline = c.Get<IPipeline>();
+
+                        _secondLevelDispatcher = new SecondLevelDispatcher(c.Get<IErrorTracker>());
+
+                        return new PipelineStepInjector(pipeline)
+                            .OnReceive(_secondLevelDispatcher, PipelineRelativePosition.Before, typeof(SimpleRetryStrategyStep));
                     });
                 })
                 .Start();
@@ -184,14 +208,44 @@ namespace Rebus.TestHelpers
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            var resetEvent = new ManualResetEvent(false);
-            _lockStepper.AddResetEvent(resetEvent);
-
-            _bus.SendLocal(message, optionalHeaders);
-
-            if (!resetEvent.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
+            using (var resetEvent = new ManualResetEvent(false))
             {
-                throw new TimeoutException($"Message {message} did not seem to have been processed withing {deliveryTimeoutSeconds} s timeout");
+                _lockStepper.AddResetEvent(resetEvent);
+
+                _bus.Advanced.SyncBus.SendLocal(message, optionalHeaders);
+
+                if (!resetEvent.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
+                {
+                    throw new TimeoutException($"Message {message} did not seem to have been processed withing {deliveryTimeoutSeconds} s timeout");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Delivers the message as a 2nd level delivery to the saga handler, i.e. the message will be immediately
+        /// dispatched inside an <see cref="IFailed{TMessage}"/> with the passed-in <paramref name="exception"/>
+        /// </summary>
+        public void DeliverFailed(object message, Exception exception, Dictionary<string, string> optionalHeaders = null, int deliveryTimeoutSeconds = 5)
+        {
+            if (message == null) throw new ArgumentNullException(nameof(message));
+            if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+            using (var resetEvent = new ManualResetEvent(false))
+            {
+                _lockStepper.AddResetEvent(resetEvent);
+
+                var headers = optionalHeaders?.Clone() ?? new Dictionary<string, string>();
+
+                var exceptionId = _secondLevelDispatcher.PrepareException(exception);
+
+                headers[SecondLevelDispatcher.SecondLevelDispatchExceptionId] = exceptionId;
+
+                _bus.Advanced.SyncBus.SendLocal(message, headers);
+
+                if (!resetEvent.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
+                {
+                    throw new TimeoutException($"Message {message} did not seem to have been processed within {deliveryTimeoutSeconds} s timeout");
+                }
             }
         }
 
@@ -221,7 +275,18 @@ namespace Rebus.TestHelpers
         /// </summary>
         public void Dispose()
         {
-            _bus.Dispose();
+            if (_disposed) return;
+
+            try
+            {
+                _bus.Dispose();
+
+                Disposed?.Invoke();
+            }
+            finally
+            {
+                _disposed = true;
+            }
         }
     }
 }

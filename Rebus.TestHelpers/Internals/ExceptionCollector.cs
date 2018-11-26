@@ -16,7 +16,7 @@ namespace Rebus.TestHelpers.Internals
         {
             try
             {
-                await next().ConfigureAwait(false);
+                await next();
             }
             catch(Exception exception)
             {
