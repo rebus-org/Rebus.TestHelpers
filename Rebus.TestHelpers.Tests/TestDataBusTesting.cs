@@ -69,6 +69,9 @@ namespace Rebus.TestHelpers.Tests
             var receivedTextData = new List<string>();
             var receivedMetadata = new List<Dictionary<string, string>>();
             var gotMessage = new ManualResetEvent(false);
+
+            Using(gotMessage);
+
             var handler = new DataBusAttachmentReadingHandler(receivedTextData, gotMessage, receivedMetadata);
 
             var dataStore = new InMemDataStore();

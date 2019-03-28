@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Rebus.Activation;
 using Rebus.Bus;
@@ -154,7 +155,7 @@ namespace Rebus.TestHelpers
                 {
                     o.SetNumberOfWorkers(1);
                     o.SetMaxParallelism(1);
-                    
+
                     o.SimpleRetryStrategy(maxDeliveryAttempts: 5, secondLevelRetriesEnabled: true);
 
                     o.Decorate<IPipeline>(c =>
@@ -202,7 +203,7 @@ namespace Rebus.TestHelpers
         public IEnumerable<HandlerException> HandlerExceptions => _exceptionCollector.CaughtExceptions;
 
         /// <summary>
-        /// Delivers the given message to the saga handler
+        /// Delivers the given message to the saga handler. This is how you would normally deliver a message to the saga.
         /// </summary>
         public void Deliver(object message, Dictionary<string, string> optionalHeaders = null, int deliveryTimeoutSeconds = 5)
         {
@@ -220,6 +221,33 @@ namespace Rebus.TestHelpers
                 }
             }
         }
+
+        /// <summary>
+        /// Finds the saga data instances that match the given predicate and marks them, so that they cause an update conflict on the next update.
+        /// </summary>
+        public void PrepareConflict<TSagaData>(Func<TSagaData, bool> sagaDataSelectionPredicate) where TSagaData : ISagaData
+        {
+            var matches = Data.OfType<TSagaData>()
+                .Where(sagaDataSelectionPredicate)
+                .ToList();
+
+            foreach (var match in matches)
+            {
+                _inMemorySagaStorage.PrepareConflict(match);
+            }
+        }
+
+        ///// <summary>
+        ///// Delivers the given message to the saga handler in a way that causes the next message to hit the same saga data
+        ///// to experience a conflict. This is how you would verify that and overridden <see cref="Saga{TSagaData}.ResolveConflict"/>
+        ///// is called.
+        ///// </summary>
+        //public void DeliverCreateConflict(object message, Dictionary<string, string> optionalHeaders = null, int deliveryTimeoutSeconds = 5)
+        //{
+        //    _inMemorySagaStorage.PrepareConflict(message);
+
+        //    Deliver(message, optionalHeaders, deliveryTimeoutSeconds);
+        //}
 
         /// <summary>
         /// Delivers the message as a 2nd level delivery to the saga handler, i.e. the message will be immediately

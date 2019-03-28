@@ -10,12 +10,14 @@ using Rebus.TestHelpers.Tests.Extensions;
 namespace Rebus.TestHelpers.Tests
 {
     [TestFixture]
-    public class TestSagaFixture_2ndLevelRetry
+    public class TestSagaFixture_2ndLevelRetry : FixtureBase
     {
         [Test]
         public void CanDispatchFailedMessage()
         {
             var failedMessageWasReceived = new ManualResetEvent(false);
+
+            Using(failedMessageWasReceived);
 
             using (var fixture = SagaFixture.For(() => new MySaga(failedMessageWasReceived)))
             {

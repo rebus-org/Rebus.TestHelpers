@@ -9,3 +9,7 @@
 ## 5.1.0
 
 * Add `DeliverFailed` method to `SagaFixture<>`, making is possible to simulate 2nd level dispatch (i.e. dispatching as `IFailed<TMessage>`)
+
+## 5.2.0
+
+* Add `PrepareConflict<>` method to `SagaFixture<>`, enabling controlled simulation of saga data update conflicts
