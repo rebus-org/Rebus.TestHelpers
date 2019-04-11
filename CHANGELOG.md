@@ -13,3 +13,9 @@
 ## 5.2.0
 
 * Add `PrepareConflict<>` method to `SagaFixture<>`, enabling controlled simulation of saga data update conflicts
+
+## 5.2.1
+
+* Fix type of event recorded when a message is deferred and explicitly routed at the same time - thanks [rsivanov]
+
+[rsivanov]: https://github.com/rsivanov
