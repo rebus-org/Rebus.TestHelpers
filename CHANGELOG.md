@@ -18,4 +18,8 @@
 
 * Fix type of event recorded when a message is deferred and explicitly routed at the same time - thanks [rsivanov]
 
+## 5.2.2
+
+* Add `FakeMessageContext` to make it easier to simulate message headers in tests
+
 [rsivanov]: https://github.com/rsivanov
