@@ -22,4 +22,8 @@
 
 * Add `FakeMessageContext` to make it easier to simulate message headers in tests
 
+## 5.2.3
+
+* Make properties of `FakeMessageContext` settable so they can be replaced after its creation
+
 [rsivanov]: https://github.com/rsivanov

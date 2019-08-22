@@ -13,7 +13,8 @@ namespace Rebus.TestHelpers
     public class FakeMessageContext : IMessageContext
     {
         /// <summary>
-        /// Creates the fake message context with the specified headers
+        /// Creates the fake message context with the specified <paramref name="message"/>, <paramref name="transportMessage"/>, and <paramref name="headers"/>.
+        /// Please note that they can all be replaced after creation
         /// </summary>
         public FakeMessageContext(Message message = null, TransportMessage transportMessage = null, Dictionary<string, string> headers = null)
         {
@@ -35,16 +36,16 @@ namespace Rebus.TestHelpers
         /// <summary>
         /// Gets the transport message if one was passed to the constructor, null otherwise
         /// </summary>
-        public TransportMessage TransportMessage { get; }
+        public TransportMessage TransportMessage { get; set; }
 
         /// <summary>
         /// Gets the logical message if one was passed to the constructor, null otherwise
         /// </summary>
-        public Message Message { get; }
+        public Message Message { get; set; }
 
         /// <summary>
         /// Gets the message headers if any could be found either explicitly passed to the constructor, or via the logical message, or via the transport message. Empty dictionary otherwise
         /// </summary>
-        public Dictionary<string, string> Headers { get; }
+        public Dictionary<string, string> Headers { get; set; }
     }
 }
