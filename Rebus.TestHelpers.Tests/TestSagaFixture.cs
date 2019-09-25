@@ -158,7 +158,7 @@ namespace Rebus.TestHelpers.Tests
                 var exception = handlerExceptions.Single();
 
                 Assert.That(exception.Exception, Is.TypeOf<RebusApplicationException>());
-                Assert.That(exception.Exception.ToString(), Contains.Substring("oh no somethine bad happened"));
+                Assert.That(exception.Exception.ToString(), Contains.Substring("oh no something bad happened"));
             }
         }
 
@@ -179,7 +179,7 @@ namespace Rebus.TestHelpers.Tests
 
             public Task Handle(FailingTestMessage message)
             {
-                throw new RebusApplicationException("oh no somethine bad happened");
+                throw new RebusApplicationException("oh no something bad happened");
             }
         }
 
