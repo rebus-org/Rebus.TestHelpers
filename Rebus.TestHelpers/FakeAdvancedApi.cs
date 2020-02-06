@@ -4,6 +4,7 @@ using Rebus.Bus.Advanced;
 using Rebus.DataBus;
 using Rebus.DataBus.InMem;
 using Rebus.TestHelpers.Internals;
+using Rebus.Time;
 
 namespace Rebus.TestHelpers
 {
@@ -14,15 +15,15 @@ namespace Rebus.TestHelpers
     {
         readonly FakeDataBus _dataBus;
 
-        internal FakeAdvancedApi(FakeBusEventRecorder recorder, FakeBusEventFactory factory)
+        internal FakeAdvancedApi(FakeBusEventRecorder recorder, FakeBusEventFactory factory, IRebusTime rebusTime)
         {
-            _dataBus = new FakeDataBus();
+            _dataBus = new FakeDataBus(rebusTime);
 
-            Workers = new FakeWorkersApi(recorder);
-            Topics = new FakeTopicsApi(recorder, factory);
-            SyncBus = new FakeSyncBus(recorder, factory);
-            Routing = new FakeRoutingApi(recorder, factory);
-            TransportMessage = new FakeTransportMessageApi(recorder);
+            Workers = new FakeWorkersApi(recorder, rebusTime);
+            Topics = new FakeTopicsApi(recorder, factory, rebusTime);
+            SyncBus = new FakeSyncBus(recorder, factory, rebusTime);
+            Routing = new FakeRoutingApi(recorder, factory, rebusTime);
+            TransportMessage = new FakeTransportMessageApi(recorder, rebusTime);
         }
 
         /// <summary>

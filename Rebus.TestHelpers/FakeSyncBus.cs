@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Rebus.Bus.Advanced;
 using Rebus.TestHelpers.Events;
 using Rebus.TestHelpers.Internals;
+using Rebus.Time;
 #pragma warning disable 1998
 
 namespace Rebus.TestHelpers
@@ -16,6 +17,7 @@ namespace Rebus.TestHelpers
     {
         readonly FakeBusEventRecorder _recorder;
         readonly FakeBusEventFactory _factory;
+        readonly IRebusTime _rebusTime;
 
         /// <summary>
         /// Creates the fake sync bus with its own internal event recorder (may be used if only an <see cref="ISyncBus"/> 
@@ -25,12 +27,14 @@ namespace Rebus.TestHelpers
         {
             _recorder = new FakeBusEventRecorder();
             _factory = new FakeBusEventFactory();
+            _rebusTime = new FakeRebusTime();
         }
 
-        internal FakeSyncBus(FakeBusEventRecorder recorder, FakeBusEventFactory factory)
+        internal FakeSyncBus(FakeBusEventRecorder recorder, FakeBusEventFactory factory, IRebusTime rebusTime)
         {
             _recorder = recorder;
             _factory = factory;
+            _rebusTime = rebusTime;
         }
 
         /// <summary>
@@ -65,41 +69,41 @@ namespace Rebus.TestHelpers
         }
         
         /// <inheritdoc />
-        public void SendLocal(object commandMessage, Dictionary<string, string> optionalHeaders = null)
+        public void SendLocal(object commandMessage, IDictionary<string, string> optionalHeaders = null)
         {
-            var messageSentToSelfEvent = _factory.CreateEventGeneric<MessageSentToSelf>(typeof(MessageSentToSelf<>), commandMessage.GetType(), commandMessage, optionalHeaders);
+            var messageSentToSelfEvent = _factory.CreateEventGeneric<MessageSentToSelf>(typeof(MessageSentToSelf<>), commandMessage.GetType(), commandMessage, optionalHeaders, _rebusTime.Now);
 
             Record(messageSentToSelfEvent);
         }
 
         /// <inheritdoc />
-        public void Send(object commandMessage, Dictionary<string, string> optionalHeaders = null)
+        public void Send(object commandMessage, IDictionary<string, string> optionalHeaders = null)
         {
-            var messageSentEvent = _factory.CreateEventGeneric<MessageSent>(typeof(MessageSent<>), commandMessage.GetType(), commandMessage, optionalHeaders);
+            var messageSentEvent = _factory.CreateEventGeneric<MessageSent>(typeof(MessageSent<>), commandMessage.GetType(), commandMessage, optionalHeaders, _rebusTime.Now);
 
             Record(messageSentEvent);
         }
 
         /// <inheritdoc />
-        public void Reply(object replyMessage, Dictionary<string, string> optionalHeaders = null)
+        public void Reply(object replyMessage, IDictionary<string, string> optionalHeaders = null)
         {
-            var replyMessageSentEvent = _factory.CreateEventGeneric<ReplyMessageSent>(typeof(ReplyMessageSent<>), replyMessage.GetType(), replyMessage, optionalHeaders);
+            var replyMessageSentEvent = _factory.CreateEventGeneric<ReplyMessageSent>(typeof(ReplyMessageSent<>), replyMessage.GetType(), replyMessage, optionalHeaders, _rebusTime.Now);
 
             Record(replyMessageSentEvent);
         }
 
         /// <inheritdoc />
-        public void Defer(TimeSpan delay, object message, Dictionary<string, string> optionalHeaders = null)
+        public void Defer(TimeSpan delay, object message, IDictionary<string, string> optionalHeaders = null)
         {
-            var messageDeferredEvent = _factory.CreateEventGeneric<MessageDeferred>(typeof(MessageDeferred<>), message.GetType(), delay, message, optionalHeaders);
+            var messageDeferredEvent = _factory.CreateEventGeneric<MessageDeferred>(typeof(MessageDeferred<>), message.GetType(), delay, message, optionalHeaders, _rebusTime.Now);
 
             Record(messageDeferredEvent);
         }
 
         /// <inheritdoc />
-        public void DeferLocal(TimeSpan delay, object message, Dictionary<string, string> optionalHeaders = null)
+        public void DeferLocal(TimeSpan delay, object message, IDictionary<string, string> optionalHeaders = null)
         {
-            var messageDeferredEvent = _factory.CreateEventGeneric<MessageDeferredToSelf>(typeof(MessageDeferredToSelf<>), message.GetType(), delay, message, optionalHeaders);
+            var messageDeferredEvent = _factory.CreateEventGeneric<MessageDeferredToSelf>(typeof(MessageDeferredToSelf<>), message.GetType(), delay, message, optionalHeaders, _rebusTime.Now);
 
             Record(messageDeferredEvent);
         }
@@ -107,31 +111,31 @@ namespace Rebus.TestHelpers
         /// <inheritdoc />
         public void Subscribe<TEvent>()
         {
-            Record(new Subscribed(typeof(TEvent)));
+            Record(new Subscribed(typeof(TEvent), _rebusTime.Now));
         }
 
         /// <inheritdoc />
         public void Subscribe(Type eventType)
         {
-            Record(new Subscribed(eventType));
+            Record(new Subscribed(eventType, _rebusTime.Now));
         }
 
         /// <inheritdoc />
         public void Unsubscribe<TEvent>()
         {
-            Record(new Unsubscribed(typeof(TEvent)));
+            Record(new Unsubscribed(typeof(TEvent), _rebusTime.Now));
         }
 
         /// <inheritdoc />
         public void Unsubscribe(Type eventType)
         {
-            Record(new Unsubscribed(eventType));
+            Record(new Unsubscribed(eventType, _rebusTime.Now));
         }
 
         /// <inheritdoc />
-        public void Publish(object eventMessage, Dictionary<string, string> optionalHeaders = null)
+        public void Publish(object eventMessage, IDictionary<string, string> optionalHeaders = null)
         {
-            var messagePublishedEvent = _factory.CreateEventGeneric<MessagePublished>(typeof(MessagePublished<>), eventMessage.GetType(), eventMessage, optionalHeaders);
+            var messagePublishedEvent = _factory.CreateEventGeneric<MessagePublished>(typeof(MessagePublished<>), eventMessage.GetType(), eventMessage, optionalHeaders, _rebusTime.Now);
 
             Record(messagePublishedEvent);
         }

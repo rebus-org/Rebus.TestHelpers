@@ -13,10 +13,12 @@ namespace Rebus.TestHelpers.Internals
     class InMemDataBusStorage : IDataBusStorage
     {
         readonly InMemDataStore _dataStore;
+        private readonly IRebusTime _rebusTime;
 
-        public InMemDataBusStorage(InMemDataStore dataStore)
+        public InMemDataBusStorage(InMemDataStore dataStore, IRebusTime rebusTime)
         {
             _dataStore = dataStore ?? throw new ArgumentNullException(nameof(dataStore));
+            _rebusTime = rebusTime;
         }
 
         public async Task Save(string id, Stream source, Dictionary<string, string> metadata = null)
@@ -28,7 +30,7 @@ namespace Rebus.TestHelpers.Internals
 
                 var metadataToWrite = new Dictionary<string, string>(metadata ?? new Dictionary<string, string>())
                 {
-                    [MetadataKeys.SaveTime] = RebusTime.Now.ToString("O"),
+                    [MetadataKeys.SaveTime] = _rebusTime.Now.ToString("O"),
                     [MetadataKeys.Length] = bytes.Length.ToString()
                 };
 
@@ -38,7 +40,7 @@ namespace Rebus.TestHelpers.Internals
 
         public async Task<Stream> Read(string id)
         {
-            var now = RebusTime.Now;
+            var now = _rebusTime.Now;
 
             var metadata = new Dictionary<string, string>
             {

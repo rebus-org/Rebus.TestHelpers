@@ -11,9 +11,11 @@ namespace Rebus.TestHelpers.Events
         /// <summary>
         /// Gets the time of when the event was recorded
         /// </summary>
-        public DateTimeOffset Time { get; } = RebusTime.Now;
+        public DateTimeOffset Time { get; }
 
-        internal FakeBusEvent() { }
+        internal FakeBusEvent(DateTimeOffset time) {
+            Time = time;
+        }
 
         /// <summary>
         /// Gets a nice string representation of this particular fake bus event

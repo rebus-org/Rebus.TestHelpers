@@ -18,7 +18,7 @@ namespace Rebus.TestHelpers.Events
         /// </summary>
         public Dictionary<string, string> OptionalHeaders { get; }
 
-        internal TransportMessageForwarded(string destinationAddress, Dictionary<string, string> optionalHeaders)
+        internal TransportMessageForwarded(string destinationAddress, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(time)
         {
             OptionalHeaders = optionalHeaders;
             DestinationAddress = destinationAddress ?? throw new ArgumentNullException(nameof(destinationAddress));

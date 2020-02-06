@@ -9,7 +9,7 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public abstract class MessageSentToSelf : FakeBusEvent
     {
-        internal MessageSentToSelf(object commandMessage, Dictionary<string, string> optionalHeaders)
+        internal MessageSentToSelf(object commandMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(time)
         {
             CommandMessage = commandMessage ?? throw new ArgumentNullException(nameof(commandMessage));
             OptionalHeaders = optionalHeaders?.Clone();
@@ -31,7 +31,7 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public class MessageSentToSelf<TMessage> : MessageSentToSelf
     {
-        internal MessageSentToSelf(object commandMessage, Dictionary<string, string> optionalHeaders) : base(commandMessage, optionalHeaders)
+        internal MessageSentToSelf(object commandMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(commandMessage, optionalHeaders, time)
         {
             CommandMessage = (TMessage) commandMessage;
         }

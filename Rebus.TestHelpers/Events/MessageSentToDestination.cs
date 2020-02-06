@@ -9,7 +9,7 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public abstract class MessageSentToDestination : FakeBusEvent
     {
-        internal MessageSentToDestination(string destinationAddress, object commandMessage, Dictionary<string, string> optionalHeaders)
+        internal MessageSentToDestination(string destinationAddress, object commandMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(time)
         {
             DestinationAddress = destinationAddress;
             OptionalHeaders = optionalHeaders?.Clone();
@@ -38,8 +38,8 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public class MessageSentToDestination<TMessage> : MessageSentToDestination
     {
-        internal MessageSentToDestination(string destinationAddress, object commandMessage, Dictionary<string, string> optionalHeaders)
-            : base(destinationAddress, commandMessage, optionalHeaders)
+        internal MessageSentToDestination(string destinationAddress, object commandMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time)
+            : base(destinationAddress, commandMessage, optionalHeaders, time)
         {
             CommandMessage = (TMessage)commandMessage;
         }

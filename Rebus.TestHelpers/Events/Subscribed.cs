@@ -12,7 +12,7 @@ namespace Rebus.TestHelpers.Events
         /// </summary>
         public Type EventType { get; }
 
-        internal Subscribed(Type eventType)
+        internal Subscribed(Type eventType, DateTimeOffset time) : base(time)
         {
             EventType = eventType ?? throw new ArgumentNullException(nameof(eventType));
         }

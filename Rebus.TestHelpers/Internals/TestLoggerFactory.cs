@@ -3,14 +3,21 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Rebus.Logging;
+using Rebus.Time;
 
 namespace Rebus.TestHelpers.Internals
 {
     class TestLoggerFactory : AbstractRebusLoggerFactory
     {
         readonly ConcurrentQueue<LogEvent> _logEvents = new ConcurrentQueue<LogEvent>();
+        private IRebusTime RebusTime { get; }
 
         public IEnumerable<LogEvent> LogEvents => _logEvents.ToList();
+
+        public TestLoggerFactory(IRebusTime rebusTime)
+        {
+            RebusTime = rebusTime;
+        }
 
         protected override ILog GetLogger(Type type)
         {
@@ -62,7 +69,7 @@ namespace Rebus.TestHelpers.Internals
 
             void Log(LogLevel level, string message, object[] objs, Exception exception = null)
             {
-                _logEvents.Enqueue(new LogEvent(level, SafeFormat(message, objs), exception, _type));
+                _logEvents.Enqueue(new LogEvent(level, SafeFormat(message, objs), exception, _type, _testLoggerFactory.RebusTime.Now));
             }
 
             string SafeFormat(string message, object[] objs)

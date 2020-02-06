@@ -24,7 +24,7 @@ namespace Rebus.TestHelpers.Events
         /// </summary>
         public Dictionary<string, string> OptionalHeaders { get; }
 
-        internal MessagePublishedToTopic(string topic, object eventMessage, Dictionary<string, string> optionalHeaders)
+        internal MessagePublishedToTopic(string topic, object eventMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(time)
         {
             Topic = topic ?? throw new ArgumentNullException(nameof(topic));
             EventMessage = eventMessage ?? throw new ArgumentNullException(nameof(eventMessage));
@@ -37,8 +37,8 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public class MessagePublishedToTopic<TMessage> : MessagePublishedToTopic
     {
-        internal MessagePublishedToTopic(string topic, object eventMessage, Dictionary<string, string> optionalHeaders) 
-            : base(topic, eventMessage, optionalHeaders)
+        internal MessagePublishedToTopic(string topic, object eventMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) 
+            : base(topic, eventMessage, optionalHeaders, time)
         {
             EventMessage = (TMessage) eventMessage;
         }

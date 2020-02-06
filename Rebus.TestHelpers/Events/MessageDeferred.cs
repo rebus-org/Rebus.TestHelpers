@@ -9,7 +9,7 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public abstract class MessageDeferred : FakeBusEvent
     {
-        internal MessageDeferred(TimeSpan delay, object commandMessage, Dictionary<string, string> optionalHeaders)
+        internal MessageDeferred(TimeSpan delay, object commandMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(time)
         {
             Delay = delay;
             CommandMessage = commandMessage ?? throw new ArgumentNullException(nameof(commandMessage));
@@ -37,8 +37,8 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public class MessageDeferred<TMessage> : MessageDeferred
     {
-        internal MessageDeferred(TimeSpan delay, object commandMessage, Dictionary<string, string> optionalHeaders) 
-            : base(delay, commandMessage, optionalHeaders)
+        internal MessageDeferred(TimeSpan delay, object commandMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) 
+            : base(delay, commandMessage, optionalHeaders, time)
         {
             CommandMessage = (TMessage) commandMessage;
         }
