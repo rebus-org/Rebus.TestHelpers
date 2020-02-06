@@ -87,11 +87,13 @@ namespace Rebus.TestHelpers
 
         internal InMemDataStore GetDataBusDataStore() => _inMemDataStore;
 
+        /// <inheritdoc />
         public Task Delete(string dataBusAttachmentId)
         {
             return Task.FromResult(0);
         }
 
+        /// <inheritdoc />
         public IEnumerable<string> Query(TimeRange readTime = null, TimeRange saveTime = null)
         {
             return new string[0];
