@@ -18,7 +18,7 @@ namespace Rebus.TestHelpers.Events
         /// </summary>
         public Dictionary<string, string> OptionalHeaders { get; }
 
-        internal TransportMessageDeferred(TimeSpan delay, Dictionary<string, string> optionalHeaders)
+        internal TransportMessageDeferred(TimeSpan delay, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(time)
         {
             Delay = delay;
             OptionalHeaders = optionalHeaders;

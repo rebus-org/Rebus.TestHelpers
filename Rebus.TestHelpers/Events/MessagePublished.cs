@@ -9,7 +9,7 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public abstract class MessagePublished : FakeBusEvent
     {
-        internal MessagePublished(object eventMessage, Dictionary<string, string> optionalHeaders)
+        internal MessagePublished(object eventMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(time)
         {
             EventMessage = eventMessage ?? throw new ArgumentNullException(nameof(eventMessage));
             OptionalHeaders = optionalHeaders?.Clone();
@@ -31,7 +31,7 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public class MessagePublished<TMessage> : MessagePublished
     {
-        internal MessagePublished(object eventMessage, Dictionary<string, string> optionalHeaders) : base(eventMessage, optionalHeaders)
+        internal MessagePublished(object eventMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(eventMessage, optionalHeaders, time)
         {
             EventMessage = (TMessage) eventMessage;
         }

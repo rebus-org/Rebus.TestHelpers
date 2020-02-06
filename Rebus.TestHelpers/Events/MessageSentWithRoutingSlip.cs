@@ -10,7 +10,7 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public abstract class MessageSentWithRoutingSlip : FakeBusEvent
     {
-        internal MessageSentWithRoutingSlip(Itinerary itinerary, object commandMessage, Dictionary<string, string> optionalHeaders)
+        internal MessageSentWithRoutingSlip(Itinerary itinerary, object commandMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time) : base(time)
         {
             Itinerary = itinerary;
             OptionalHeaders = optionalHeaders?.Clone();
@@ -38,8 +38,8 @@ namespace Rebus.TestHelpers.Events
     /// </summary>
     public class MessageSentWithRoutingSlip<TMessage> : MessageSentWithRoutingSlip
     {
-        internal MessageSentWithRoutingSlip(Itinerary itinerary, object commandMessage, Dictionary<string, string> optionalHeaders)
-            : base(itinerary, commandMessage, optionalHeaders)
+        internal MessageSentWithRoutingSlip(Itinerary itinerary, object commandMessage, Dictionary<string, string> optionalHeaders, DateTimeOffset time)
+            : base(itinerary, commandMessage, optionalHeaders, time)
         {
             CommandMessage = (TMessage)commandMessage;
         }

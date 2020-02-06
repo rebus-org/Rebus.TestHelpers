@@ -80,7 +80,7 @@ namespace Rebus.TestHelpers.Tests
                 {"custom-meta", "whee!!"}
             });
 
-            using (FakeDataBus.EstablishContext(dataStore))
+            using (FakeDataBus.EstablishContext(dataStore, new FakeRebusTime()))
             {
                 await handler.Handle("this is an attachment id");
             }

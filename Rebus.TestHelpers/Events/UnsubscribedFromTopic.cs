@@ -12,7 +12,7 @@ namespace Rebus.TestHelpers.Events
         /// </summary>
         public string Topic { get; }
 
-        internal UnsubscribedFromTopic(string topic)
+        internal UnsubscribedFromTopic(string topic, DateTimeOffset time) : base(time)
         {
             Topic = topic ?? throw new ArgumentNullException(nameof(topic));
         }

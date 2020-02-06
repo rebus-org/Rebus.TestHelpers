@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Rebus.DataBus;
 using Rebus.DataBus.InMem;
 using Rebus.Testing;
+using Rebus.Time;
 using InMemDataBusStorage = Rebus.TestHelpers.Internals.InMemDataBusStorage;
 
 namespace Rebus.TestHelpers
@@ -20,11 +21,11 @@ namespace Rebus.TestHelpers
         /// <summary>
         /// Establishes a fake presence of a configured data bus, using the given <see cref="InMemDataStore"/> to retrieve data
         /// </summary>
-        public static IDisposable EstablishContext(InMemDataStore dataStore)
+        public static IDisposable EstablishContext(InMemDataStore dataStore, IRebusTime rebusTime)
         {
             if (dataStore == null) throw new ArgumentNullException(nameof(dataStore));
 
-            TestBackdoor.EnableTestMode(new InMemDataBusStorage(dataStore));
+            TestBackdoor.EnableTestMode(new InMemDataBusStorage(dataStore, rebusTime));
 
             return new CleanUp(TestBackdoor.Reset);
         }
@@ -32,7 +33,7 @@ namespace Rebus.TestHelpers
         /// <summary>
         /// Creates the fake data bus, optionally using the given in-mem data store to store attachments
         /// </summary>
-        public FakeDataBus()
+        public FakeDataBus(IRebusTime rebusTime)
         {
             // if there is an "ambient" storage, use that
             if (TestBackdoor.TestDataBusStorage != null)
@@ -43,7 +44,7 @@ namespace Rebus.TestHelpers
             else
             {
                 _inMemDataStore = new InMemDataStore();
-                _dataBusStorage = new InMemDataBusStorage(_inMemDataStore);
+                _dataBusStorage = new InMemDataBusStorage(_inMemDataStore, rebusTime);
             }
         }
 
@@ -85,5 +86,17 @@ namespace Rebus.TestHelpers
         }
 
         internal InMemDataStore GetDataBusDataStore() => _inMemDataStore;
+
+        /// <inheritdoc />
+        public Task Delete(string dataBusAttachmentId)
+        {
+            return Task.FromResult(0);
+        }
+
+        /// <inheritdoc />
+        public IEnumerable<string> Query(TimeRange readTime = null, TimeRange saveTime = null)
+        {
+            return new string[0];
+        }
     }
 }

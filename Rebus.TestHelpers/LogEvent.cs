@@ -9,9 +9,9 @@ namespace Rebus.TestHelpers
     /// </summary>
     public class LogEvent
     {
-        internal LogEvent(LogLevel level, string text, Exception exceptionOrNull, Type sourceType)
+        internal LogEvent(LogLevel level, string text, Exception exceptionOrNull, Type sourceType, DateTimeOffset time)
         {
-            Time = RebusTime.Now;
+            Time = time;
             Level = level;
             Text = text ?? throw new ArgumentNullException(nameof(text));
             ExceptionOrNull = exceptionOrNull;

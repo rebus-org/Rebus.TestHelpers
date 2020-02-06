@@ -5,6 +5,7 @@ using Rebus.Bus.Advanced;
 using Rebus.Routing;
 using Rebus.TestHelpers.Events;
 using Rebus.TestHelpers.Internals;
+using Rebus.Time;
 #pragma warning disable 1998
 
 namespace Rebus.TestHelpers
@@ -16,43 +17,47 @@ namespace Rebus.TestHelpers
     {
         readonly FakeBusEventRecorder _recorder;
         readonly FakeBusEventFactory _factory;
+        readonly IRebusTime _rebusTime;
 
-        internal FakeRoutingApi(FakeBusEventRecorder recorder, FakeBusEventFactory factory)
+        internal FakeRoutingApi(FakeBusEventRecorder recorder, FakeBusEventFactory factory, IRebusTime rebusTime)
         {
             _recorder = recorder;
             _factory = factory;
+            _rebusTime = rebusTime;
         }
 
         /// <inheritdoc />
-        public async Task Send(string destinationAddress, object explicitlyRoutedMessage, Dictionary<string, string> optionalHeaders = null)
+        public async Task Send(string destinationAddress, object explicitlyRoutedMessage, IDictionary<string, string> optionalHeaders = null)
         {
             var messageSentToDestination = _factory.CreateEventGeneric<MessageSentToDestination>(
                 typeof(MessageSentToDestination<>),
                 explicitlyRoutedMessage.GetType(),
-                destinationAddress, 
+                destinationAddress,
                 explicitlyRoutedMessage,
-                optionalHeaders
+                optionalHeaders, 
+                _rebusTime.Now
             );
 
             _recorder.Record(messageSentToDestination);
         }
 
         /// <inheritdoc />
-        public async Task SendRoutingSlip(Itinerary itinerary, object message, Dictionary<string, string> optionalHeaders = null)
+        public async Task SendRoutingSlip(Itinerary itinerary, object message, IDictionary<string, string> optionalHeaders = null)
         {
             var messageSentWithRoutingSlip = _factory.CreateEventGeneric<MessageSentWithRoutingSlip>(
                 typeof(MessageSentWithRoutingSlip<>),
                 message.GetType(),
                 itinerary,
                 message,
-                optionalHeaders
+                optionalHeaders, 
+                _rebusTime.Now
             );
 
             _recorder.Record(messageSentWithRoutingSlip);
         }
 
         /// <inheritdoc />
-        public async Task Defer(string destinationAddress, TimeSpan delay, object explicitlyRoutedMessage, Dictionary<string, string> optionalHeaders = null)
+        public async Task Defer(string destinationAddress, TimeSpan delay, object explicitlyRoutedMessage, IDictionary<string, string> optionalHeaders = null)
         {
             var messageSentToDestination = _factory.CreateEventGeneric<MessageDeferredToDestination>(
                 typeof(MessageDeferredToDestination<>),
@@ -60,7 +65,8 @@ namespace Rebus.TestHelpers
                 destinationAddress,
                 delay,
                 explicitlyRoutedMessage,
-                optionalHeaders
+                optionalHeaders,
+                _rebusTime.Now
             );
 
             _recorder.Record(messageSentToDestination);

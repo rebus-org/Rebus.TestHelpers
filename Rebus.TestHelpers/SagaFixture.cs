@@ -12,6 +12,7 @@ using Rebus.Retry;
 using Rebus.Retry.Simple;
 using Rebus.Sagas;
 using Rebus.TestHelpers.Internals;
+using Rebus.Time;
 using Rebus.Transport.InMem;
 using InMemorySagaStorage = Rebus.TestHelpers.Internals.InMemorySagaStorage;
 // ReSharper disable UnusedTypeParameter
@@ -88,6 +89,7 @@ namespace Rebus.TestHelpers
         readonly LockStepper _lockStepper;
         readonly ExceptionCollector _exceptionCollector;
         readonly TestLoggerFactory _loggerFactory;
+        readonly IRebusTime _rebusTime;
 
         SecondLevelDispatcher _secondLevelDispatcher;
 
@@ -145,7 +147,9 @@ namespace Rebus.TestHelpers
 
             _exceptionCollector = new ExceptionCollector();
 
-            _loggerFactory = new TestLoggerFactory();
+            _rebusTime = new FakeRebusTime();
+
+            _loggerFactory = new TestLoggerFactory(_rebusTime);
 
             _bus = configurerFactory()
                 .Logging(l => l.Use(_loggerFactory))
