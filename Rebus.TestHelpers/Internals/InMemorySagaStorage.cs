@@ -23,7 +23,8 @@ namespace Rebus.TestHelpers.Internals
 
         readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings
         {
-            TypeNameHandling = TypeNameHandling.All
+            TypeNameHandling = TypeNameHandling.All,
+            TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Full
         };
 
         internal IEnumerable<ISagaData> Instances
