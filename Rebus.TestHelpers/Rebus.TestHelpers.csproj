@@ -3,14 +3,11 @@
  <PropertyGroup>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Rebus.TestHelpers</RootNamespace>
-    <AssemblyName>Rebus.TestHelpers</AssemblyName>
     <TargetFrameworks>net45;net46;netstandard2.0</TargetFrameworks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Authors>mookid8000</Authors>
     <PackageProjectUrl>https://rebus.fm/what-is-rebus/</PackageProjectUrl>
     <PackageDescription>Provides test helpers for Rebus, e.g. a fake bus (records what happens to it), a saga fixture (for testing sagas), etc.</PackageDescription>
-    <Copyright>Copyright 2012-2016</Copyright>
+    <Copyright>Copyright 2012</Copyright>
     <PackageTags>rebus testing unit-testing tdd test-helpers</PackageTags>
     <RepositoryUrl>https://github.com/rebus-org/Rebus.TestHelpers</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

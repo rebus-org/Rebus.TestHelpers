@@ -26,5 +26,8 @@
 ## 6.0.1
 * Add full .NET type information (including full assembly name) in JSON-serialized saga data in `SagaFixture` to work better with dynamically generated types - thanks [fishie]
 
+## 6.1.0
+* Add version constraint to Rebus dep
+
 [fishie]: https://github.com/fishie
 [rsivanov]: https://github.com/rsivanov
