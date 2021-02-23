@@ -29,8 +29,6 @@
 ## 6.1.0
 * Add version constraint to Rebus dep
 
-## 6.1.1
-* Make test helpers work with newest Rebus
 
 [fishie]: https://github.com/fishie
 [rsivanov]: https://github.com/rsivanov

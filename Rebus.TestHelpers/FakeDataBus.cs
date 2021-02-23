@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Rebus.DataBus;
 using Rebus.DataBus.InMem;
-using Rebus.TestHelpers.Internals;
+using Rebus.Testing;
 using Rebus.Time;
 using InMemDataBusStorage = Rebus.TestHelpers.Internals.InMemDataBusStorage;
 
