@@ -1,8 +1,8 @@
 ﻿using System;
 using Rebus.Bus;
-using Rebus.Extensions;
 using Rebus.Messages;
 using Rebus.Pipeline;
+using Rebus.TestHelpers.Internals;
 
 namespace Rebus.TestHelpers
 {
