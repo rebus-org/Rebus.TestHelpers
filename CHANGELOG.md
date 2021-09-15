@@ -29,6 +29,9 @@
 ## 6.1.0
 * Add version constraint to Rebus dep
 
+## 6.1.1
+* Add `ThrowIfNotEmpty` extension for `IEnumerable<HandlerException>` to make it easy to verify that no exceptions were thrown - thanks [mclausen]
 
 [fishie]: https://github.com/fishie
+[mclausen]: https://github.com/mclausen
 [rsivanov]: https://github.com/rsivanov
