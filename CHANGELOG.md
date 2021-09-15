@@ -26,10 +26,10 @@
 ## 6.0.1
 * Add full .NET type information (including full assembly name) in JSON-serialized saga data in `SagaFixture` to work better with dynamically generated types - thanks [fishie]
 
-## 6.1.0
+## 6.1.1
 * Add version constraint to Rebus dep
 
-## 6.1.1
+## 6.1.2
 * Add `ThrowIfNotEmpty` extension for `IEnumerable<HandlerException>` to make it easy to verify that no exceptions were thrown - thanks [mclausen]
 
 [fishie]: https://github.com/fishie
