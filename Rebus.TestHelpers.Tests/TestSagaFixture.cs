@@ -14,29 +14,27 @@ namespace Rebus.TestHelpers.Tests
         [Test]
         public void CanSetUpFakeSagaData()
         {
-            using (var fixture = SagaFixture.For<MySaga>())
-            {
-                fixture.Add(new MySagaState { Text = "I know you!" });
-                fixture.AddRange(new[] { new MySagaState { Text = "I know you too!" } });
+            using var fixture = SagaFixture.For<MySaga>();
+            
+            fixture.Add(new MySagaState { Text = "I know you!" });
+            fixture.AddRange(new[] { new MySagaState { Text = "I know you too!" } });
 
-                Assert.That(fixture.Data.Count(), Is.EqualTo(2));
-                Assert.That(fixture.Data.OfType<MySagaState>().Count(d => d.Text == "I know you!"), Is.EqualTo(1));
-                Assert.That(fixture.Data.OfType<MySagaState>().Count(d => d.Text == "I know you too!"), Is.EqualTo(1));
-            }
+            Assert.That(fixture.Data.Count(), Is.EqualTo(2));
+            Assert.That(fixture.Data.OfType<MySagaState>().Count(d => d.Text == "I know you!"), Is.EqualTo(1));
+            Assert.That(fixture.Data.OfType<MySagaState>().Count(d => d.Text == "I know you too!"), Is.EqualTo(1));
         }
 
         [Test]
         public void CanRetrieveSagaData()
         {
-            using (var fixture = SagaFixture.For<MySaga>())
-            {
-                fixture.Deliver(new TestMessage("hej"));
+            using var fixture = SagaFixture.For<MySaga>();
+            
+            fixture.Deliver(new TestMessage("hej"));
 
-                var current = fixture.Data.OfType<MySagaState>().ToList();
+            var current = fixture.Data.OfType<MySagaState>().ToList();
 
-                Assert.That(current.Count, Is.EqualTo(1));
-                Assert.That(current[0].Text, Is.EqualTo("hej"));
-            }
+            Assert.That(current.Count, Is.EqualTo(1));
+            Assert.That(current[0].Text, Is.EqualTo("hej"));
         }
 
         [Test]
@@ -56,31 +54,29 @@ namespace Rebus.TestHelpers.Tests
         [Test]
         public void EmitsCreatedEvent()
         {
-            using (var fixture = SagaFixture.For<MySaga>())
-            {
-                var gotEvent = false;
-                fixture.Created += d => gotEvent = true;
+            using var fixture = SagaFixture.For<MySaga>();
+            
+            var gotEvent = false;
+            fixture.Created += _ => gotEvent = true;
 
-                fixture.Deliver(new TestMessage("hej"));
+            fixture.Deliver(new TestMessage("hej"));
 
-                Assert.That(gotEvent, Is.True);
-            }
+            Assert.That(gotEvent, Is.True);
         }
 
         [Test]
         public void EmitsUpdatedEvent()
         {
-            using (var fixture = SagaFixture.For<MySaga>())
-            {
-                fixture.Deliver(new TestMessage("hej"));
+            using var fixture = SagaFixture.For<MySaga>();
+            
+            fixture.Deliver(new TestMessage("hej"));
 
-                var gotEvent = false;
-                fixture.Updated += d => gotEvent = true;
+            var gotEvent = false;
+            fixture.Updated += _ => gotEvent = true;
 
-                fixture.Deliver(new TestMessage("hej"));
+            fixture.Deliver(new TestMessage("hej"));
 
-                Assert.That(gotEvent, Is.True);
-            }
+            Assert.That(gotEvent, Is.True);
         }
 
         [Test]

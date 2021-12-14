@@ -6,7 +6,7 @@ namespace Rebus.TestHelpers.Tests
 {
     public abstract class FixtureBase
     {
-        readonly ConcurrentStack<IDisposable> _disposables = new ConcurrentStack<IDisposable>();
+        readonly ConcurrentStack<IDisposable> _disposables = new();
 
         protected void CleanUpDisposables()
         {

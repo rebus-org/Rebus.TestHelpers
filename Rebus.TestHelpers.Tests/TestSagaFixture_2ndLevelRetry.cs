@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Rebus.Retry.Simple;
 using Rebus.Sagas;
 using Rebus.TestHelpers.Tests.Extensions;
+#pragma warning disable CS1998
 
 namespace Rebus.TestHelpers.Tests
 {
@@ -19,13 +20,12 @@ namespace Rebus.TestHelpers.Tests
 
             Using(failedMessageWasReceived);
 
-            using (var fixture = SagaFixture.For(() => new MySaga(failedMessageWasReceived)))
-            {
-                fixture.DumpLogsOnDispose();
-                fixture.Add(new MySagaState { Text = "known-string" });
-                fixture.DeliverFailed(new TestMessage("known-string"), new DriveNotFoundException("B:"));
-                failedMessageWasReceived.WaitOrDie(TimeSpan.FromSeconds(3));
-            }
+            using var fixture = SagaFixture.For(() => new MySaga(failedMessageWasReceived));
+            
+            fixture.DumpLogsOnDispose();
+            fixture.Add(new MySagaState { Text = "known-string" });
+            fixture.DeliverFailed(new TestMessage("known-string"), new DriveNotFoundException("B:"));
+            failedMessageWasReceived.WaitOrDie(TimeSpan.FromSeconds(3));
         }
 
         class MySagaState : SagaData

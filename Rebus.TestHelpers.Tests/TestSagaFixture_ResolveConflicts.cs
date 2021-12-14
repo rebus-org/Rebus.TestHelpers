@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Rebus.Handlers;
 using Rebus.Sagas;
 using Rebus.TestHelpers.Tests.Extensions;
+// ReSharper disable UnusedAutoPropertyAccessor.Local
 
 #pragma warning disable 1998
 
@@ -17,98 +18,95 @@ namespace Rebus.TestHelpers.Tests
         [Test]
         public void CanSimulateConflict()
         {
-            using (var fixture = SagaFixture.For(() => new ConflictSagaHandler()))
-            {
-                fixture.DumpLogsOnDispose();
+            using var fixture = SagaFixture.For(() => new ConflictSagaHandler());
             
-                fixture.Deliver(new SomeMessage("some-id", "HEJ MED DIG"));
+            fixture.DumpLogsOnDispose();
+            
+            fixture.Deliver(new SomeMessage("some-id", "HEJ MED DIG"));
 
-                fixture.PrepareConflict<ConflictSagaHandlerData>(d => d.CorrelationId == "some-id");
+            fixture.PrepareConflict<ConflictSagaHandlerData>(d => d.CorrelationId == "some-id");
 
-                fixture.Deliver(new SomeMessage("some-id", "MIN VEN"));
+            fixture.Deliver(new SomeMessage("some-id", "MIN VEN"));
 
-                var sagaData = fixture.Data
-                    .OfType<ConflictSagaHandlerData>()
-                    .FirstOrDefault(d => d.CorrelationId == "some-id")
-                    ?? throw new AssertionException($"Could not find saga data with correlation ID 'some-id'");
+            var sagaData = fixture.Data
+                               .OfType<ConflictSagaHandlerData>()
+                               .FirstOrDefault(d => d.CorrelationId == "some-id")
+                           ?? throw new AssertionException("Could not find saga data with correlation ID 'some-id'");
 
-                string GetReceivedStrings() =>
-                    $@"Got these strings:
+            string GetReceivedStrings() =>
+                $@"Got these strings:
 
 {string.Join(Environment.NewLine, sagaData.ReceivedStrings)}
 ";
 
-                Assert.That(sagaData.ReceivedStrings.Count, Is.EqualTo(2), GetReceivedStrings);
-                Assert.That(sagaData.ReceivedStrings.Contains("HEJ MED DIG"), Is.True, GetReceivedStrings);
-                Assert.That(sagaData.ReceivedStrings.Contains("MIN VEN"), Is.True, GetReceivedStrings);
-            }
+            Assert.That(sagaData.ReceivedStrings.Count, Is.EqualTo(2), GetReceivedStrings);
+            Assert.That(sagaData.ReceivedStrings.Contains("HEJ MED DIG"), Is.True, GetReceivedStrings);
+            Assert.That(sagaData.ReceivedStrings.Contains("MIN VEN"), Is.True, GetReceivedStrings);
         }
 
         [Test]
         public void CanSimulateConflict_MultipleConflicts()
         {
-            using (var fixture = SagaFixture.For(() => new ConflictSagaHandler()))
-            {
-                fixture.DumpLogsOnDispose();
+            using var fixture = SagaFixture.For(() => new ConflictSagaHandler());
+            
+            fixture.DumpLogsOnDispose();
 
-                fixture.Deliver(new SomeMessage("some-id", "HEJ MED DIG"));
+            fixture.Deliver(new SomeMessage("some-id", "HEJ MED DIG"));
 
-                fixture.PrepareConflict<ConflictSagaHandlerData>(d => d.CorrelationId == "some-id");
+            fixture.PrepareConflict<ConflictSagaHandlerData>(d => d.CorrelationId == "some-id");
 
-                fixture.Deliver(new SomeMessage("some-id", "MIN VEN"));
+            fixture.Deliver(new SomeMessage("some-id", "MIN VEN"));
 
-                fixture.PrepareConflict<ConflictSagaHandlerData>(d => d.CorrelationId == "some-id");
+            fixture.PrepareConflict<ConflictSagaHandlerData>(d => d.CorrelationId == "some-id");
 
-                fixture.Deliver(new SomeMessage("some-id", "IGEN"));
+            fixture.Deliver(new SomeMessage("some-id", "IGEN"));
 
-                var sagaData = fixture.Data
-                    .OfType<ConflictSagaHandlerData>()
-                    .FirstOrDefault(d => d.CorrelationId == "some-id")
-                    ?? throw new AssertionException($"Could not find saga data with correlation ID 'some-id'");
+            var sagaData = fixture.Data
+                               .OfType<ConflictSagaHandlerData>()
+                               .FirstOrDefault(d => d.CorrelationId == "some-id")
+                           ?? throw new AssertionException("Could not find saga data with correlation ID 'some-id'");
 
-                string GetReceivedStrings() =>
-                    $@"Got these strings:
+            string GetReceivedStrings() =>
+                $@"Got these strings:
 
 {string.Join(Environment.NewLine, sagaData.ReceivedStrings)}
 ";
 
-                Assert.That(sagaData.ReceivedStrings.Count, Is.EqualTo(3), GetReceivedStrings);
-                Assert.That(sagaData.ReceivedStrings.Contains("HEJ MED DIG"), Is.True, GetReceivedStrings);
-                Assert.That(sagaData.ReceivedStrings.Contains("MIN VEN"), Is.True, GetReceivedStrings);
-                Assert.That(sagaData.ReceivedStrings.Contains("IGEN"), Is.True, GetReceivedStrings);
-            }
+            Assert.That(sagaData.ReceivedStrings.Count, Is.EqualTo(3), GetReceivedStrings);
+            Assert.That(sagaData.ReceivedStrings.Contains("HEJ MED DIG"), Is.True, GetReceivedStrings);
+            Assert.That(sagaData.ReceivedStrings.Contains("MIN VEN"), Is.True, GetReceivedStrings);
+            Assert.That(sagaData.ReceivedStrings.Contains("IGEN"), Is.True, GetReceivedStrings);
         }
 
         [Test]
         public void CanSimulateConflict_MultipleMessages_SingleConflict()
         {
-            using (var fixture = SagaFixture.For(() => new ConflictSagaHandler()))
-            {
-                fixture.DumpLogsOnDispose();
+            using var fixture = SagaFixture.For(() => new ConflictSagaHandler());
+            
+            fixture.DumpLogsOnDispose();
 
-                fixture.Deliver(new SomeMessage("some-id", "HEJ MED DIG"));
-                fixture.Deliver(new SomeMessage("some-id", "MIN VEN"));
+            fixture.Deliver(new SomeMessage("some-id", "HEJ MED DIG"));
+            fixture.Deliver(new SomeMessage("some-id", "MIN VEN"));
 
-                fixture.PrepareConflict<ConflictSagaHandlerData>(d => d.CorrelationId == "some-id");
+            fixture.PrepareConflict<ConflictSagaHandlerData>(d => d.CorrelationId == "some-id");
 
-                fixture.Deliver(new SomeMessage("some-id", "IGEN"));
+            fixture.Deliver(new SomeMessage("some-id", "IGEN"));
 
-                var sagaData = fixture.Data
-                    .OfType<ConflictSagaHandlerData>()
-                    .FirstOrDefault(d => d.CorrelationId == "some-id")
-                    ?? throw new AssertionException($"Could not find saga data with correlation ID 'some-id'");
+            var sagaData = fixture.Data
+                               .OfType<ConflictSagaHandlerData>()
+                               .FirstOrDefault(d => d.CorrelationId == "some-id")
+                           ?? throw new AssertionException("Could not find saga data with correlation ID 'some-id'");
 
-                string GetReceivedStrings() =>
-                    $@"Got these strings:
+            string GetReceivedStrings() =>
+                $@"Got these strings:
 
 {string.Join(Environment.NewLine, sagaData.ReceivedStrings)}
 ";
 
-                Assert.That(sagaData.ReceivedStrings.Count, Is.EqualTo(3), GetReceivedStrings);
-                Assert.That(sagaData.ReceivedStrings.Contains("HEJ MED DIG"), Is.True, GetReceivedStrings);
-                Assert.That(sagaData.ReceivedStrings.Contains("MIN VEN"), Is.True, GetReceivedStrings);
-                Assert.That(sagaData.ReceivedStrings.Contains("IGEN"), Is.True, GetReceivedStrings);
-            }
+            Assert.That(sagaData.ReceivedStrings.Count, Is.EqualTo(3), GetReceivedStrings);
+            Assert.That(sagaData.ReceivedStrings.Contains("HEJ MED DIG"), Is.True, GetReceivedStrings);
+            Assert.That(sagaData.ReceivedStrings.Contains("MIN VEN"), Is.True, GetReceivedStrings);
+            Assert.That(sagaData.ReceivedStrings.Contains("IGEN"), Is.True, GetReceivedStrings);
         }
 
         class SomeMessage
@@ -142,7 +140,7 @@ namespace Rebus.TestHelpers.Tests
 
         class ConflictSagaHandlerData : SagaData
         {
-            public List<string> ReceivedStrings { get; } = new List<string>();
+            public List<string> ReceivedStrings { get; } = new();
             public string CorrelationId { get; set; }
         }
     }

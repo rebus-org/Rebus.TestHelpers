@@ -53,12 +53,11 @@ namespace Rebus.TestHelpers.Tests
 
             public async Task Handle(string message)
             {
-                using (var source = new MemoryStream(Encoding.UTF8.GetBytes(message)))
-                {
-                    var dataBusAttachment = await _bus.Advanced.DataBus.CreateAttachment(source);
+                await using var source = new MemoryStream(Encoding.UTF8.GetBytes(message));
+                
+                var dataBusAttachment = await _bus.Advanced.DataBus.CreateAttachment(source);
 
-                    await _bus.Send(dataBusAttachment);
-                }
+                await _bus.Send(dataBusAttachment);
             }
         }
 
