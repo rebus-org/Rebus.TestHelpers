@@ -7,11 +7,10 @@ cache:
   - '%LocalAppData%\NuGet\Cache'
 
 before_build:
-  - appveyor-retry dotnet restore -v Minimal
+  - dotnet restore -v Minimal
 
 build_script:
-  - dotnet build Rebus.TestHelpers -c Release 
-  - dotnet build Rebus.TestHelpers.Tests -c Release 
+  - dotnet build -c Release 
 
 test_script:
   - dotnet test
