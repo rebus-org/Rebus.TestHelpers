@@ -52,20 +52,20 @@ public static class SagaFixture
     /// <summary>
     /// Creates a saga fixture for the specified saga handler, which will be instantiated by the given factory method
     /// </summary>
-    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<TSagaHandler> sagaHandlerFactory) where TSagaHandler : Saga, IHandleMessages
+    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<TSagaHandler> sagaHandlerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false) where TSagaHandler : Saga, IHandleMessages
     {
         if (sagaHandlerFactory == null) throw new ArgumentNullException(nameof(sagaHandlerFactory));
 
         var activator = new BuiltinHandlerActivator();
         activator.Register(sagaHandlerFactory);
 
-        return For<TSagaHandler>(() => Configure.With(activator));
+        return For<TSagaHandler>(() => Configure.With(activator), maxDeliveryAttempts: maxDeliveryAttempts, secondLevelRetriesEnabled: secondLevelRetriesEnabled);
     }
 
     /// <summary>
     /// Creates a saga fixture for the specified saga handler, which will be instantiated by the given factory method
     /// </summary>
-    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<RebusConfigurer> configurerFactory) where TSagaHandler : Saga, IHandleMessages
+    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<RebusConfigurer> configurerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false) where TSagaHandler : Saga, IHandleMessages
     {
         if (!LoggingInfoHasBeenShown)
         {
@@ -73,7 +73,7 @@ public static class SagaFixture
             LoggingInfoHasBeenShown = true;
         }
 
-        return new SagaFixture<TSagaHandler>(configurerFactory);
+        return new SagaFixture<TSagaHandler>(configurerFactory, maxDeliveryAttempts, secondLevelRetriesEnabled);
     }
 }
 
@@ -89,7 +89,6 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
     readonly LockStepper _lockStepper;
     readonly ExceptionCollector _exceptionCollector;
     readonly TestLoggerFactory _loggerFactory;
-    readonly IRebusTime _rebusTime;
 
     SecondLevelDispatcher _secondLevelDispatcher;
 
@@ -130,7 +129,7 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
     /// </summary>
     public event Action Disposed;
 
-    internal SagaFixture(Func<RebusConfigurer> configurerFactory)
+    internal SagaFixture(Func<RebusConfigurer> configurerFactory, int maxDeliveryAttempts, bool secondLevelRetriesEnabled)
     {
         if (configurerFactory == null) throw new ArgumentNullException(nameof(configurerFactory));
 
@@ -147,20 +146,21 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
 
         _exceptionCollector = new ExceptionCollector();
 
-        _rebusTime = new FakeRebusTime();
-
-        _loggerFactory = new TestLoggerFactory(_rebusTime);
+        _loggerFactory = new TestLoggerFactory(new FakeRebusTime());
 
         _bus = configurerFactory()
             .Logging(l => l.Use(_loggerFactory))
             .Transport(t => t.UseInMemoryTransport(network, SagaInputQueueName))
-            .Sagas(s => s.Register(c => _inMemorySagaStorage))
+            .Sagas(s => s.Register(_ => _inMemorySagaStorage))
             .Options(o =>
             {
                 o.SetNumberOfWorkers(1);
                 o.SetMaxParallelism(1);
 
-                o.SimpleRetryStrategy(maxDeliveryAttempts: 5, secondLevelRetriesEnabled: true);
+                o.SimpleRetryStrategy(
+                    maxDeliveryAttempts: maxDeliveryAttempts,
+                    secondLevelRetriesEnabled: secondLevelRetriesEnabled
+                );
 
                 o.Decorate<IPipeline>(c =>
                 {
@@ -213,16 +213,15 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
 
-        using (var resetEvent = new ManualResetEvent(false))
+        using var resetEvent = new ManualResetEvent(false);
+
+        _lockStepper.AddResetEvent(resetEvent);
+
+        _bus.Advanced.SyncBus.SendLocal(message, optionalHeaders);
+
+        if (!resetEvent.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
         {
-            _lockStepper.AddResetEvent(resetEvent);
-
-            _bus.Advanced.SyncBus.SendLocal(message, optionalHeaders);
-
-            if (!resetEvent.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
-            {
-                throw new TimeoutException($"Message {message} did not seem to have been processed withing {deliveryTimeoutSeconds} s timeout");
-            }
+            throw new TimeoutException($"Message {message} did not seem to have been processed withing {deliveryTimeoutSeconds} s timeout");
         }
     }
 
@@ -241,18 +240,6 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
         }
     }
 
-    ///// <summary>
-    ///// Delivers the given message to the saga handler in a way that causes the next message to hit the same saga data
-    ///// to experience a conflict. This is how you would verify that and overridden <see cref="Saga{TSagaData}.ResolveConflict"/>
-    ///// is called.
-    ///// </summary>
-    //public void DeliverCreateConflict(object message, Dictionary<string, string> optionalHeaders = null, int deliveryTimeoutSeconds = 5)
-    //{
-    //    _inMemorySagaStorage.PrepareConflict(message);
-
-    //    Deliver(message, optionalHeaders, deliveryTimeoutSeconds);
-    //}
-
     /// <summary>
     /// Delivers the message as a 2nd level delivery to the saga handler, i.e. the message will be immediately
     /// dispatched inside an <see cref="IFailed{TMessage}"/> with the passed-in <paramref name="exception"/>
@@ -262,22 +249,21 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
         if (message == null) throw new ArgumentNullException(nameof(message));
         if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-        using (var resetEvent = new ManualResetEvent(false))
+        using var resetEvent = new ManualResetEvent(false);
+
+        _lockStepper.AddResetEvent(resetEvent);
+
+        var headers = optionalHeaders?.Clone() ?? new Dictionary<string, string>();
+
+        var exceptionId = _secondLevelDispatcher.PrepareException(exception);
+
+        headers[SecondLevelDispatcher.SecondLevelDispatchExceptionId] = exceptionId;
+
+        _bus.Advanced.SyncBus.SendLocal(message, headers);
+
+        if (!resetEvent.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
         {
-            _lockStepper.AddResetEvent(resetEvent);
-
-            var headers = optionalHeaders?.Clone() ?? new Dictionary<string, string>();
-
-            var exceptionId = _secondLevelDispatcher.PrepareException(exception);
-
-            headers[SecondLevelDispatcher.SecondLevelDispatchExceptionId] = exceptionId;
-
-            _bus.Advanced.SyncBus.SendLocal(message, headers);
-
-            if (!resetEvent.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
-            {
-                throw new TimeoutException($"Message {message} did not seem to have been processed within {deliveryTimeoutSeconds} s timeout");
-            }
+            throw new TimeoutException($"Message {message} did not seem to have been processed within {deliveryTimeoutSeconds} s timeout");
         }
     }
 

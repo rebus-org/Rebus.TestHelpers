@@ -20,8 +20,8 @@ public class TestSagaFixture_2ndLevelRetry : FixtureBase
 
         Using(failedMessageWasReceived);
 
-        using var fixture = SagaFixture.For(() => new MySaga(failedMessageWasReceived));
-            
+        using var fixture = SagaFixture.For(() => new MySaga(failedMessageWasReceived), secondLevelRetriesEnabled: true);
+
         fixture.DumpLogsOnDispose();
         fixture.Add(new MySagaState { Text = "known-string" });
         fixture.DeliverFailed(new TestMessage("known-string"), new DriveNotFoundException("B:"));

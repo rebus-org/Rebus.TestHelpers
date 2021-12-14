@@ -32,6 +32,9 @@
 ## 6.1.2
 * Add `ThrowIfNotEmpty` extension for `IEnumerable<HandlerException>` to make it easy to verify that no exceptions were thrown - thanks [mclausen]
 
+## 6.1.3
+* Do not enable 2nd level retries in saga fixture by default. Can be enabled by setting `secondLevelRetriesEnabled: true` when creating the saga fixture.
+
 [fishie]: https://github.com/fishie
 [mclausen]: https://github.com/mclausen
 [rsivanov]: https://github.com/rsivanov
