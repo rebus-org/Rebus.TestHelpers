@@ -8,64 +8,63 @@ using Rebus.Sagas;
 using Rebus.TestHelpers.Tests.Extensions;
 #pragma warning disable CS1998
 
-namespace Rebus.TestHelpers.Tests
+namespace Rebus.TestHelpers.Tests;
+
+[TestFixture]
+public class TestSagaFixture_2ndLevelRetry : FixtureBase
 {
-    [TestFixture]
-    public class TestSagaFixture_2ndLevelRetry : FixtureBase
+    [Test]
+    public void CanDispatchFailedMessage()
     {
-        [Test]
-        public void CanDispatchFailedMessage()
-        {
-            var failedMessageWasReceived = new ManualResetEvent(false);
+        var failedMessageWasReceived = new ManualResetEvent(false);
 
-            Using(failedMessageWasReceived);
+        Using(failedMessageWasReceived);
 
-            using var fixture = SagaFixture.For(() => new MySaga(failedMessageWasReceived));
+        using var fixture = SagaFixture.For(() => new MySaga(failedMessageWasReceived));
             
-            fixture.DumpLogsOnDispose();
-            fixture.Add(new MySagaState { Text = "known-string" });
-            fixture.DeliverFailed(new TestMessage("known-string"), new DriveNotFoundException("B:"));
-            failedMessageWasReceived.WaitOrDie(TimeSpan.FromSeconds(3));
-        }
+        fixture.DumpLogsOnDispose();
+        fixture.Add(new MySagaState { Text = "known-string" });
+        fixture.DeliverFailed(new TestMessage("known-string"), new DriveNotFoundException("B:"));
+        failedMessageWasReceived.WaitOrDie(TimeSpan.FromSeconds(3));
+    }
 
-        class MySagaState : SagaData
+    class MySagaState : SagaData
+    {
+        public string Text { get; set; }
+    }
+
+    class MySaga : Saga<MySagaState>, IAmInitiatedBy<TestMessage>, IAmInitiatedBy<IFailed<TestMessage>>
+    {
+        readonly ManualResetEvent _gotFailedMessage;
+
+        public MySaga(ManualResetEvent gotFailedMessage)
         {
-            public string Text { get; set; }
+            _gotFailedMessage = gotFailedMessage;
         }
 
-        class MySaga : Saga<MySagaState>, IAmInitiatedBy<TestMessage>, IAmInitiatedBy<IFailed<TestMessage>>
+        protected override void CorrelateMessages(ICorrelationConfig<MySagaState> config)
         {
-            readonly ManualResetEvent _gotFailedMessage;
-
-            public MySaga(ManualResetEvent gotFailedMessage)
-            {
-                _gotFailedMessage = gotFailedMessage;
-            }
-
-            protected override void CorrelateMessages(ICorrelationConfig<MySagaState> config)
-            {
-                config.Correlate<TestMessage>(m => m.Text, d => d.Text);
-                config.Correlate<IFailed<TestMessage>>(m => m.Message.Text, d => d.Text);
-            }
-
-            public async Task Handle(TestMessage message) => throw new ApplicationException("Sorry, this was not expected in this test");
-
-            public async Task Handle(IFailed<TestMessage> message)
-            {
-                Data.Text = message.Message.Text;
-
-                _gotFailedMessage.Set();
-            }
+            config.Correlate<TestMessage>(m => m.Text, d => d.Text);
+            config.Correlate<IFailed<TestMessage>>(m => m.Message.Text, d => d.Text);
         }
 
-        class TestMessage
+        public async Task Handle(TestMessage message) => throw new ApplicationException("Sorry, this was not expected in this test");
+
+        public async Task Handle(IFailed<TestMessage> message)
         {
-            public TestMessage(string text)
-            {
-                Text = text;
-            }
+            Data.Text = message.Message.Text;
 
-            public string Text { get; }
+            _gotFailedMessage.Set();
         }
+    }
+
+    class TestMessage
+    {
+        public TestMessage(string text)
+        {
+            Text = text;
+        }
+
+        public string Text { get; }
     }
 }

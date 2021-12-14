@@ -13,119 +13,118 @@ using Rebus.Handlers;
 using Rebus.TestHelpers.Events;
 using Rebus.TestHelpers.Tests.Extensions;
 
-namespace Rebus.TestHelpers.Tests
+namespace Rebus.TestHelpers.Tests;
+
+[TestFixture]
+[Description("How to simulate reading a data bus attachment when unit testing (as in: really isolated) handlers")]
+public class TestDataBusTesting : FixtureBase
 {
-    [TestFixture]
-    [Description("How to simulate reading a data bus attachment when unit testing (as in: really isolated) handlers")]
-    public class TestDataBusTesting : FixtureBase
+    [Test]
+    public async Task CreateTest()
     {
-        [Test]
-        public async Task CreateTest()
+        var fakeBus = new FakeBus();
+        var dataStore = fakeBus.GetDataBusDataStore();
+        var handler = new DataBusAttachmentCreatingHandler(fakeBus);
+
+        await handler.Handle("hej med dig min ven!");
+
+        var sentDataBusAttachments = fakeBus.Events
+            .OfType<MessageSent<DataBusAttachment>>()
+            .ToList();
+
+        Assert.That(sentDataBusAttachments.Count, Is.EqualTo(1));
+
+        var attachmentId = sentDataBusAttachments.First().CommandMessage.Id;
+
+        var data = dataStore.Load(attachmentId);
+        var textData = Encoding.UTF8.GetString(data);
+
+        Assert.That(textData, Is.EqualTo("hej med dig min ven!"));
+    }
+
+    class DataBusAttachmentCreatingHandler : IHandleMessages<string>
+    {
+        readonly IBus _bus;
+
+        public DataBusAttachmentCreatingHandler(IBus bus)
         {
-            var fakeBus = new FakeBus();
-            var dataStore = fakeBus.GetDataBusDataStore();
-            var handler = new DataBusAttachmentCreatingHandler(fakeBus);
-
-            await handler.Handle("hej med dig min ven!");
-
-            var sentDataBusAttachments = fakeBus.Events
-                .OfType<MessageSent<DataBusAttachment>>()
-                .ToList();
-
-            Assert.That(sentDataBusAttachments.Count, Is.EqualTo(1));
-
-            var attachmentId = sentDataBusAttachments.First().CommandMessage.Id;
-
-            var data = dataStore.Load(attachmentId);
-            var textData = Encoding.UTF8.GetString(data);
-
-            Assert.That(textData, Is.EqualTo("hej med dig min ven!"));
+            _bus = bus;
         }
 
-        class DataBusAttachmentCreatingHandler : IHandleMessages<string>
+        public async Task Handle(string message)
         {
-            readonly IBus _bus;
-
-            public DataBusAttachmentCreatingHandler(IBus bus)
-            {
-                _bus = bus;
-            }
-
-            public async Task Handle(string message)
-            {
-                await using var source = new MemoryStream(Encoding.UTF8.GetBytes(message));
+            await using var source = new MemoryStream(Encoding.UTF8.GetBytes(message));
                 
-                var dataBusAttachment = await _bus.Advanced.DataBus.CreateAttachment(source);
+            var dataBusAttachment = await _bus.Advanced.DataBus.CreateAttachment(source);
 
-                await _bus.Send(dataBusAttachment);
-            }
+            await _bus.Send(dataBusAttachment);
+        }
+    }
+
+    [Test]
+    public async Task ReadTest()
+    {
+        const string textData = "this is the payload!!";
+        var receivedTextData = new List<string>();
+        var receivedMetadata = new List<Dictionary<string, string>>();
+        var gotMessage = new ManualResetEvent(false);
+
+        Using(gotMessage);
+
+        var handler = new DataBusAttachmentReadingHandler(receivedTextData, gotMessage, receivedMetadata);
+
+        var dataStore = new InMemDataStore();
+        dataStore.Save("this is an attachment id", Encoding.UTF8.GetBytes(textData), new Dictionary<string, string>
+        {
+            {"custom-meta", "whee!!"}
+        });
+
+        using (FakeDataBus.EstablishContext(dataStore, new FakeRebusTime()))
+        {
+            await handler.Handle("this is an attachment id");
         }
 
-        [Test]
-        public async Task ReadTest()
+        gotMessage.WaitOrDie(TimeSpan.FromSeconds(1));
+
+        Assert.That(receivedTextData.Count, Is.EqualTo(1));
+        Assert.That(receivedTextData.First(), Is.EqualTo(textData));
+
+        Assert.That(receivedMetadata.Count, Is.EqualTo(1));
+        Assert.That(receivedMetadata.First()["custom-meta"], Is.EqualTo("whee!!"));
+    }
+
+    class DataBusAttachmentReadingHandler : IHandleMessages<string>
+    {
+        readonly List<string> _receivedTextData;
+        readonly ManualResetEvent _gotMessage;
+        readonly List<Dictionary<string, string>> _receivedMetadata;
+
+        public DataBusAttachmentReadingHandler(List<string> receivedTextData, ManualResetEvent gotMessage, List<Dictionary<string, string>> receivedMetadata)
         {
-            const string textData = "this is the payload!!";
-            var receivedTextData = new List<string>();
-            var receivedMetadata = new List<Dictionary<string, string>>();
-            var gotMessage = new ManualResetEvent(false);
-
-            Using(gotMessage);
-
-            var handler = new DataBusAttachmentReadingHandler(receivedTextData, gotMessage, receivedMetadata);
-
-            var dataStore = new InMemDataStore();
-            dataStore.Save("this is an attachment id", Encoding.UTF8.GetBytes(textData), new Dictionary<string, string>
-            {
-                {"custom-meta", "whee!!"}
-            });
-
-            using (FakeDataBus.EstablishContext(dataStore, new FakeRebusTime()))
-            {
-                await handler.Handle("this is an attachment id");
-            }
-
-            gotMessage.WaitOrDie(TimeSpan.FromSeconds(1));
-
-            Assert.That(receivedTextData.Count, Is.EqualTo(1));
-            Assert.That(receivedTextData.First(), Is.EqualTo(textData));
-
-            Assert.That(receivedMetadata.Count, Is.EqualTo(1));
-            Assert.That(receivedMetadata.First()["custom-meta"], Is.EqualTo("whee!!"));
+            _receivedTextData = receivedTextData;
+            _gotMessage = gotMessage;
+            _receivedMetadata = receivedMetadata;
         }
 
-        class DataBusAttachmentReadingHandler : IHandleMessages<string>
+        public async Task Handle(string message)
         {
-            readonly List<string> _receivedTextData;
-            readonly ManualResetEvent _gotMessage;
-            readonly List<Dictionary<string, string>> _receivedMetadata;
-
-            public DataBusAttachmentReadingHandler(List<string> receivedTextData, ManualResetEvent gotMessage, List<Dictionary<string, string>> receivedMetadata)
+            using (var destination = new MemoryStream())
             {
-                _receivedTextData = receivedTextData;
-                _gotMessage = gotMessage;
-                _receivedMetadata = receivedMetadata;
-            }
+                var attachment = new DataBusAttachment(message);
 
-            public async Task Handle(string message)
-            {
-                using (var destination = new MemoryStream())
+                using (var source = await attachment.OpenRead())
                 {
-                    var attachment = new DataBusAttachment(message);
-
-                    using (var source = await attachment.OpenRead())
-                    {
-                        await source.CopyToAsync(destination);
-                    }
-
-                    _receivedTextData.Add(Encoding.UTF8.GetString(destination.ToArray()));
-
-                    var metadata = await attachment.GetMetadata();
-
-                    _receivedMetadata.Add(metadata);
+                    await source.CopyToAsync(destination);
                 }
 
-                _gotMessage.Set();
+                _receivedTextData.Add(Encoding.UTF8.GetString(destination.ToArray()));
+
+                var metadata = await attachment.GetMetadata();
+
+                _receivedMetadata.Add(metadata);
             }
+
+            _gotMessage.Set();
         }
     }
 }

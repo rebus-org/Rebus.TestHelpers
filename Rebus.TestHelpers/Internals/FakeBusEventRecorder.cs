@@ -5,59 +5,58 @@ using System.Linq;
 using System.Reflection;
 using Rebus.TestHelpers.Events;
 
-namespace Rebus.TestHelpers.Internals
+namespace Rebus.TestHelpers.Internals;
+
+class FakeBusEventRecorder
 {
-    class FakeBusEventRecorder
+    readonly ConcurrentQueue<FakeBusEvent> _events = new ConcurrentQueue<FakeBusEvent>();
+    readonly List<Delegate> _callbacks = new List<Delegate>();
+
+    public IEnumerable<FakeBusEvent> Events => _events.ToList();
+
+    public IEnumerable<FakeBusEvent> GetEvents()
     {
-        readonly ConcurrentQueue<FakeBusEvent> _events = new ConcurrentQueue<FakeBusEvent>();
-        readonly List<Delegate> _callbacks = new List<Delegate>();
+        return _events.ToList();
+    }
 
-        public IEnumerable<FakeBusEvent> Events => _events.ToList();
+    public void AddCallback<TEvent>(Action<TEvent> callback)
+    {
+        _callbacks.Add(callback);
+    }
 
-        public IEnumerable<FakeBusEvent> GetEvents()
+    public void Clear()
+    {
+        FakeBusEvent instance;
+        while (_events.TryDequeue(out instance)) { }
+    }
+
+    public void Record(FakeBusEvent fakeBusEvent)
+    {
+        AddFakeBusEvent(fakeBusEvent);
+
+        InvokeCompatibleCallbacks(fakeBusEvent);
+    }
+
+    void AddFakeBusEvent(FakeBusEvent fakeBusEvent)
+    {
+        _events.Enqueue(fakeBusEvent);
+    }
+
+    void InvokeCompatibleCallbacks(FakeBusEvent fakeBusEvent)
+    {
+        foreach (var callback in _callbacks)
         {
-            return _events.ToList();
-        }
+            var compatibleHandlerType = typeof(Action<>).MakeGenericType(fakeBusEvent.GetType());
 
-        public void AddCallback<TEvent>(Action<TEvent> callback)
-        {
-            _callbacks.Add(callback);
-        }
+            if (!compatibleHandlerType.IsInstanceOfType(callback)) continue;
 
-        public void Clear()
-        {
-            FakeBusEvent instance;
-            while (_events.TryDequeue(out instance)) { }
-        }
-
-        public void Record(FakeBusEvent fakeBusEvent)
-        {
-            AddFakeBusEvent(fakeBusEvent);
-
-            InvokeCompatibleCallbacks(fakeBusEvent);
-        }
-
-        void AddFakeBusEvent(FakeBusEvent fakeBusEvent)
-        {
-            _events.Enqueue(fakeBusEvent);
-        }
-
-        void InvokeCompatibleCallbacks(FakeBusEvent fakeBusEvent)
-        {
-            foreach (var callback in _callbacks)
+            try
             {
-                var compatibleHandlerType = typeof(Action<>).MakeGenericType(fakeBusEvent.GetType());
-
-                if (!compatibleHandlerType.IsInstanceOfType(callback)) continue;
-
-                try
-                {
-                    callback.DynamicInvoke(fakeBusEvent);
-                }
-                catch (Exception exception)
-                {
-                    throw new TargetInvocationException($"Error invoking callback for fake bus event {fakeBusEvent}", exception);
-                }
+                callback.DynamicInvoke(fakeBusEvent);
+            }
+            catch (Exception exception)
+            {
+                throw new TargetInvocationException($"Error invoking callback for fake bus event {fakeBusEvent}", exception);
             }
         }
     }

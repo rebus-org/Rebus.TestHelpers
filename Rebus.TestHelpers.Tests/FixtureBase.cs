@@ -2,40 +2,39 @@
 using System.Collections.Concurrent;
 using NUnit.Framework;
 
-namespace Rebus.TestHelpers.Tests
+namespace Rebus.TestHelpers.Tests;
+
+public abstract class FixtureBase
 {
-    public abstract class FixtureBase
+    readonly ConcurrentStack<IDisposable> _disposables = new();
+
+    protected void CleanUpDisposables()
     {
-        readonly ConcurrentStack<IDisposable> _disposables = new();
-
-        protected void CleanUpDisposables()
+        while (_disposables.TryPop(out var disposable))
         {
-            while (_disposables.TryPop(out var disposable))
-            {
-                disposable.Dispose();
-            }
+            disposable.Dispose();
         }
+    }
 
-        protected TDisposable Using<TDisposable>(TDisposable disposable) where TDisposable : IDisposable
-        {
-            _disposables.Push(disposable);
-            return disposable;
-        }
+    protected TDisposable Using<TDisposable>(TDisposable disposable) where TDisposable : IDisposable
+    {
+        _disposables.Push(disposable);
+        return disposable;
+    }
 
-        [SetUp]
-        public void InternalSetUp()
-        {
-            SetUp();
-        }
+    [SetUp]
+    public void InternalSetUp()
+    {
+        SetUp();
+    }
 
-        protected virtual void SetUp()
-        {
-        }
+    protected virtual void SetUp()
+    {
+    }
 
-        [TearDown]
-        public void InternalTearDown()
-        {
-            CleanUpDisposables();
-        }
+    [TearDown]
+    public void InternalTearDown()
+    {
+        CleanUpDisposables();
     }
 }

@@ -4,38 +4,37 @@ using Rebus.Messages;
 using Rebus.Pipeline;
 using Rebus.TestHelpers.Internals;
 
-namespace Rebus.TestHelpers
+namespace Rebus.TestHelpers;
+
+/// <summary>
+/// Represents an exception caught while dispatching a message to message handlers
+/// </summary>
+public class HandlerException
 {
     /// <summary>
-    /// Represents an exception caught while dispatching a message to message handlers
+    /// Gets the incoming step context for the message being handled when the exception was caught
     /// </summary>
-    public class HandlerException
+    public IncomingStepContext IncomingStepContext { get; }
+
+    /// <summary>
+    /// Gets the caught exception
+    /// </summary>
+    public Exception Exception { get; }
+
+    internal HandlerException(IncomingStepContext incomingStepContext, Exception exception)
     {
-        /// <summary>
-        /// Gets the incoming step context for the message being handled when the exception was caught
-        /// </summary>
-        public IncomingStepContext IncomingStepContext { get; }
+        IncomingStepContext = incomingStepContext;
+        Exception = exception;
+    }
 
-        /// <summary>
-        /// Gets the caught exception
-        /// </summary>
-        public Exception Exception { get; }
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var message = IncomingStepContext.Load<Message>();
 
-        internal HandlerException(IncomingStepContext incomingStepContext, Exception exception)
-        {
-            IncomingStepContext = incomingStepContext;
-            Exception = exception;
-        }
-
-        /// <inheritdoc />
-        public override string ToString()
-        {
-            var message = IncomingStepContext.Load<Message>();
-
-            return $@"{message.GetMessageLabel()}:
+        return $@"{message.GetMessageLabel()}:
 
 {Exception.ToString().Indented(4)}
 ";
-        }
     }
 }

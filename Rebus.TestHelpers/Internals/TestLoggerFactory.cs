@@ -5,77 +5,76 @@ using System.Linq;
 using Rebus.Logging;
 using Rebus.Time;
 
-namespace Rebus.TestHelpers.Internals
+namespace Rebus.TestHelpers.Internals;
+
+class TestLoggerFactory : AbstractRebusLoggerFactory
 {
-    class TestLoggerFactory : AbstractRebusLoggerFactory
+    readonly ConcurrentQueue<LogEvent> _logEvents = new ConcurrentQueue<LogEvent>();
+    private IRebusTime RebusTime { get; }
+
+    public IEnumerable<LogEvent> LogEvents => _logEvents.ToList();
+
+    public TestLoggerFactory(IRebusTime rebusTime)
     {
-        readonly ConcurrentQueue<LogEvent> _logEvents = new ConcurrentQueue<LogEvent>();
-        private IRebusTime RebusTime { get; }
+        RebusTime = rebusTime;
+    }
 
-        public IEnumerable<LogEvent> LogEvents => _logEvents.ToList();
+    protected override ILog GetLogger(Type type)
+    {
+        return new TestLogger(type, _logEvents, this);
+    }
 
-        public TestLoggerFactory(IRebusTime rebusTime)
+    class TestLogger : ILog
+    {
+        readonly Type _type;
+        readonly ConcurrentQueue<LogEvent> _logEvents;
+        readonly TestLoggerFactory _testLoggerFactory;
+
+        public TestLogger(Type type, ConcurrentQueue<LogEvent> logEvents, TestLoggerFactory testLoggerFactory)
         {
-            RebusTime = rebusTime;
+            _type = type;
+            _logEvents = logEvents;
+            _testLoggerFactory = testLoggerFactory;
         }
 
-        protected override ILog GetLogger(Type type)
+        public void Debug(string message, params object[] objs)
         {
-            return new TestLogger(type, _logEvents, this);
+            Log(LogLevel.Debug, message, objs);
         }
 
-        class TestLogger : ILog
+        public void Info(string message, params object[] objs)
         {
-            readonly Type _type;
-            readonly ConcurrentQueue<LogEvent> _logEvents;
-            readonly TestLoggerFactory _testLoggerFactory;
+            Log(LogLevel.Info, message, objs);
+        }
 
-            public TestLogger(Type type, ConcurrentQueue<LogEvent> logEvents, TestLoggerFactory testLoggerFactory)
-            {
-                _type = type;
-                _logEvents = logEvents;
-                _testLoggerFactory = testLoggerFactory;
-            }
+        public void Warn(string message, params object[] objs)
+        {
+            Log(LogLevel.Warn, message, objs);
+        }
 
-            public void Debug(string message, params object[] objs)
-            {
-                Log(LogLevel.Debug, message, objs);
-            }
+        public void Warn(Exception exception, string message, params object[] objs)
+        {
+            Log(LogLevel.Warn, message, objs, exception);
+        }
 
-            public void Info(string message, params object[] objs)
-            {
-                Log(LogLevel.Info, message, objs);
-            }
+        public void Error(Exception exception, string message, params object[] objs)
+        {
+            Log(LogLevel.Error, message, objs, exception);
+        }
 
-            public void Warn(string message, params object[] objs)
-            {
-                Log(LogLevel.Warn, message, objs);
-            }
+        public void Error(string message, params object[] objs)
+        {
+            Log(LogLevel.Error, message, objs);
+        }
 
-            public void Warn(Exception exception, string message, params object[] objs)
-            {
-                Log(LogLevel.Warn, message, objs, exception);
-            }
+        void Log(LogLevel level, string message, object[] objs, Exception exception = null)
+        {
+            _logEvents.Enqueue(new LogEvent(level, SafeFormat(message, objs), exception, _type, _testLoggerFactory.RebusTime.Now));
+        }
 
-            public void Error(Exception exception, string message, params object[] objs)
-            {
-                Log(LogLevel.Error, message, objs, exception);
-            }
-
-            public void Error(string message, params object[] objs)
-            {
-                Log(LogLevel.Error, message, objs);
-            }
-
-            void Log(LogLevel level, string message, object[] objs, Exception exception = null)
-            {
-                _logEvents.Enqueue(new LogEvent(level, SafeFormat(message, objs), exception, _type, _testLoggerFactory.RebusTime.Now));
-            }
-
-            string SafeFormat(string message, object[] objs)
-            {
-                return _testLoggerFactory.RenderString(message, objs);
-            }
+        string SafeFormat(string message, object[] objs)
+        {
+            return _testLoggerFactory.RenderString(message, objs);
         }
     }
 }

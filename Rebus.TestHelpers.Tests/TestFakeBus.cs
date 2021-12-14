@@ -5,85 +5,84 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using Rebus.TestHelpers.Events;
 
-namespace Rebus.TestHelpers.Tests
+namespace Rebus.TestHelpers.Tests;
+
+[TestFixture]
+public class TestFakeBus : FixtureBase
 {
-    [TestFixture]
-    public class TestFakeBus : FixtureBase
+    [Test]
+    public void CanClearEventsFromFakeBus()
     {
-        [Test]
-        public void CanClearEventsFromFakeBus()
+        var bus = new FakeBus();
+        var commandMessage = new { Text = "hej med dig min ven!!!!" };
+        bus.Send(commandMessage).Wait();
+
+        bus.Clear();
+
+        Assert.That(bus.Events.Count(), Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task CheckThatEventsAreProperlyRecorded()
+    {
+        var bus = new FakeBus();
+
+        var commandMessage = new { Text = "hej med dig min ven!!!!" };
+        await bus.Send(commandMessage);
+
+        var messageSentEvents = bus.Events.OfType<MessageSent>().ToList();
+
+        Assert.That(messageSentEvents.Count, Is.EqualTo(1));
+        Assert.That(messageSentEvents[0].CommandMessage, Is.EqualTo(commandMessage));
+    }
+
+    class MyMessage
+    {
+        public MyMessage(string text)
         {
-            var bus = new FakeBus();
-            var commandMessage = new { Text = "hej med dig min ven!!!!" };
-            bus.Send(commandMessage).Wait();
-
-            bus.Clear();
-
-            Assert.That(bus.Events.Count(), Is.EqualTo(0));
+            Text = text;
         }
 
-        [Test]
-        public async Task CheckThatEventsAreProperlyRecorded()
-        {
-            var bus = new FakeBus();
+        public string Text { get; }
+    }
 
-            var commandMessage = new { Text = "hej med dig min ven!!!!" };
-            await bus.Send(commandMessage);
+    [Test]
+    public void CodeSampleForComment()
+    {
+        var fakeBus = new FakeBus();
 
-            var messageSentEvents = bus.Events.OfType<MessageSent>().ToList();
+        fakeBus.Send(new MyMessage("woohoo!")).Wait();
 
-            Assert.That(messageSentEvents.Count, Is.EqualTo(1));
-            Assert.That(messageSentEvents[0].CommandMessage, Is.EqualTo(commandMessage));
-        }
+        var sentMessagesWithMyGreeting = fakeBus.Events
+            .OfType<MessageSent<MyMessage>>()
+            .Count(m => m.CommandMessage.Text == "woohoo!");
 
-        class MyMessage
-        {
-            public MyMessage(string text)
-            {
-                Text = text;
-            }
+        Assert.That(sentMessagesWithMyGreeting, Is.EqualTo(1));
+    }
 
-            public string Text { get; }
-        }
+    [Test]
+    public void CanDoItAll()
+    {
+        var fakeBus = new FakeBus();
 
-        [Test]
-        public void CodeSampleForComment()
-        {
-            var fakeBus = new FakeBus();
+        fakeBus.Send(new MyMessage("send")).Wait();
+        fakeBus.SendLocal(new MyMessage("send")).Wait();
+        fakeBus.Publish(new MyMessage("send")).Wait();
+        fakeBus.Defer(TimeSpan.FromSeconds(10), new MyMessage("send")).Wait();
+        fakeBus.Subscribe<MyMessage>().Wait();
+        fakeBus.Unsubscribe<MyMessage>().Wait();
+    }
 
-            fakeBus.Send(new MyMessage("woohoo!")).Wait();
+    [Test]
+    public void CanInvokeCallback()
+    {
+        var fakeBus = new FakeBus();
+        var callbacks = new List<string>();
 
-            var sentMessagesWithMyGreeting = fakeBus.Events
-                .OfType<MessageSent<MyMessage>>()
-                .Count(m => m.CommandMessage.Text == "woohoo!");
+        fakeBus.On<MessageSent>(e => callbacks.Add($"message sent: {e.CommandMessage}"));
 
-            Assert.That(sentMessagesWithMyGreeting, Is.EqualTo(1));
-        }
+        fakeBus.Send("whatever").Wait();
 
-        [Test]
-        public void CanDoItAll()
-        {
-            var fakeBus = new FakeBus();
-
-            fakeBus.Send(new MyMessage("send")).Wait();
-            fakeBus.SendLocal(new MyMessage("send")).Wait();
-            fakeBus.Publish(new MyMessage("send")).Wait();
-            fakeBus.Defer(TimeSpan.FromSeconds(10), new MyMessage("send")).Wait();
-            fakeBus.Subscribe<MyMessage>().Wait();
-            fakeBus.Unsubscribe<MyMessage>().Wait();
-        }
-
-        [Test]
-        public void CanInvokeCallback()
-        {
-            var fakeBus = new FakeBus();
-            var callbacks = new List<string>();
-
-            fakeBus.On<MessageSent>(e => callbacks.Add($"message sent: {e.CommandMessage}"));
-
-            fakeBus.Send("whatever").Wait();
-
-            Assert.That(callbacks, Is.EqualTo(new[] {"message sent: whatever"}));
-        }
+        Assert.That(callbacks, Is.EqualTo(new[] {"message sent: whatever"}));
     }
 }

@@ -8,52 +8,51 @@ using Rebus.Time;
 
 #pragma warning disable 1998
 
-namespace Rebus.TestHelpers.Internals
+namespace Rebus.TestHelpers.Internals;
+
+class InMemDataBusStorage : IDataBusStorage
 {
-    class InMemDataBusStorage : IDataBusStorage
+    readonly InMemDataStore _dataStore;
+    private readonly IRebusTime _rebusTime;
+
+    public InMemDataBusStorage(InMemDataStore dataStore, IRebusTime rebusTime)
     {
-        readonly InMemDataStore _dataStore;
-        private readonly IRebusTime _rebusTime;
+        _dataStore = dataStore ?? throw new ArgumentNullException(nameof(dataStore));
+        _rebusTime = rebusTime;
+    }
 
-        public InMemDataBusStorage(InMemDataStore dataStore, IRebusTime rebusTime)
+    public async Task Save(string id, Stream source, Dictionary<string, string> metadata = null)
+    {
+        using (var destination = new MemoryStream())
         {
-            _dataStore = dataStore ?? throw new ArgumentNullException(nameof(dataStore));
-            _rebusTime = rebusTime;
-        }
+            await source.CopyToAsync(destination).ConfigureAwait(false);
+            var bytes = destination.ToArray();
 
-        public async Task Save(string id, Stream source, Dictionary<string, string> metadata = null)
-        {
-            using (var destination = new MemoryStream())
+            var metadataToWrite = new Dictionary<string, string>(metadata ?? new Dictionary<string, string>())
             {
-                await source.CopyToAsync(destination).ConfigureAwait(false);
-                var bytes = destination.ToArray();
-
-                var metadataToWrite = new Dictionary<string, string>(metadata ?? new Dictionary<string, string>())
-                {
-                    [MetadataKeys.SaveTime] = _rebusTime.Now.ToString("O"),
-                    [MetadataKeys.Length] = bytes.Length.ToString()
-                };
-
-                _dataStore.Save(id, bytes, metadataToWrite);
-            }
-        }
-
-        public async Task<Stream> Read(string id)
-        {
-            var now = _rebusTime.Now;
-
-            var metadata = new Dictionary<string, string>
-            {
-                {MetadataKeys.ReadTime, now.ToString("O") }
+                [MetadataKeys.SaveTime] = _rebusTime.Now.ToString("O"),
+                [MetadataKeys.Length] = bytes.Length.ToString()
             };
 
-            _dataStore.AddMetadata(id, metadata);
-
-            var source = new MemoryStream(_dataStore.Load(id));
-
-            return source;
+            _dataStore.Save(id, bytes, metadataToWrite);
         }
-
-        public async Task<Dictionary<string, string>> ReadMetadata(string id) => _dataStore.LoadMetadata(id);
     }
+
+    public async Task<Stream> Read(string id)
+    {
+        var now = _rebusTime.Now;
+
+        var metadata = new Dictionary<string, string>
+        {
+            {MetadataKeys.ReadTime, now.ToString("O") }
+        };
+
+        _dataStore.AddMetadata(id, metadata);
+
+        var source = new MemoryStream(_dataStore.Load(id));
+
+        return source;
+    }
+
+    public async Task<Dictionary<string, string>> ReadMetadata(string id) => _dataStore.LoadMetadata(id);
 }
