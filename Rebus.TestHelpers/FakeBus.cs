@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Rebus.Bus;
 using Rebus.Bus.Advanced;
-using Rebus.DataBus;
 using Rebus.DataBus.InMem;
 using Rebus.TestHelpers.Events;
 using Rebus.TestHelpers.Internals;
@@ -20,8 +19,8 @@ namespace Rebus.TestHelpers;
 /// </summary>
 public class FakeBus : IBus
 {
-    readonly FakeBusEventRecorder _recorder = new FakeBusEventRecorder();
-    readonly FakeBusEventFactory _factory = new FakeBusEventFactory();
+    readonly FakeBusEventRecorder _recorder = new();
+    readonly FakeBusEventFactory _factory = new();
     readonly FakeAdvancedApi _advanced;
     readonly IRebusTime _rebusTime;
 

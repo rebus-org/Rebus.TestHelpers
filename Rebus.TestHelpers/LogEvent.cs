@@ -1,6 +1,5 @@
 ﻿using System;
 using Rebus.Logging;
-using Rebus.Time;
 
 namespace Rebus.TestHelpers;
 
