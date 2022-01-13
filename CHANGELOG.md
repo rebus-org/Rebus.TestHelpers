@@ -35,6 +35,9 @@
 ## 6.1.3
 * Do not enable 2nd level retries in saga fixture by default. Can be enabled by setting `secondLevelRetriesEnabled: true` when creating the saga fixture.
 
+## 7.0.0
+* Change API of `FakeMessageContext` to contain an `IncomingStepContext`, which makes it possible to mock more stuff (notably, the `CancellationToken` can be added)
+
 [fishie]: https://github.com/fishie
 [mclausen]: https://github.com/mclausen
 [rsivanov]: https://github.com/rsivanov
