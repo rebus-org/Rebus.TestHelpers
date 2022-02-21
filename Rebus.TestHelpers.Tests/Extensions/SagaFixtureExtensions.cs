@@ -5,9 +5,10 @@ namespace Rebus.TestHelpers.Tests.Extensions;
 
 static class SagaFixtureExtensions
 {
-    public static void DumpLogsOnDispose<TSagaHandler>(this SagaFixture<TSagaHandler> sagaFixture)
-        where TSagaHandler : Saga
+    public static void DumpLogsOnDispose<TSagaHandler>(this SagaFixture<TSagaHandler> sagaFixture) where TSagaHandler : Saga
     {
+        if (sagaFixture == null) throw new ArgumentNullException(nameof(sagaFixture));
+
         sagaFixture.Disposed += () =>
         {
             Console.WriteLine(string.Join(Environment.NewLine, sagaFixture.LogEvents));

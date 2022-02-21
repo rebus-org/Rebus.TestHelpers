@@ -7,6 +7,8 @@ static class ManualResetEventExtensions
 {
     public static void WaitOrDie(this ManualResetEvent resetEvent, TimeSpan timeout)
     {
+        if (resetEvent == null) throw new ArgumentNullException(nameof(resetEvent));
+        
         if (resetEvent.WaitOne(timeout)) return;
 
         throw new TimeoutException($"Reset event was not set within {timeout} timeout");
