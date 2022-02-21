@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Rebus.Exceptions;
 using Rebus.Sagas;
 
@@ -20,12 +19,11 @@ class InMemorySagaStorage : ISagaStorage
     readonly ConcurrentDictionary<Guid, ISagaData> _data = new ConcurrentDictionary<Guid, ISagaData>();
     readonly ConcurrentDictionary<Guid, ISagaData> _previousDatas = new ConcurrentDictionary<Guid, ISagaData>();
     readonly object _lock = new object();
-
-    readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings
+    readonly ISagaSerializer _sagaSerializer;
+    public InMemorySagaStorage(ISagaSerializer sagaSerializer)
     {
-        TypeNameHandling = TypeNameHandling.All,
-        TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Full
-    };
+        _sagaSerializer = sagaSerializer ?? throw new ArgumentNullException(nameof(sagaSerializer));
+    }
 
     internal IEnumerable<ISagaData> Instances
     {
@@ -58,6 +56,7 @@ class InMemorySagaStorage : ISagaStorage
     internal event Action CouldNotCorrelate;
 
     readonly ConcurrentDictionary<Guid, ISagaData> _sagaDatasToCauseConflict = new ConcurrentDictionary<Guid, ISagaData>();
+
 
     public void PrepareConflict(ISagaData sagaData)
     {
@@ -164,9 +163,9 @@ class InMemorySagaStorage : ISagaStorage
 
             var clone = Clone(sagaData);
             clone.Revision++;
-                
+
             SaveSagaData(clone);
-                
+
             Updated?.Invoke(clone);
             sagaData.Revision++;
         }
@@ -235,8 +234,8 @@ class InMemorySagaStorage : ISagaStorage
 
     ISagaData Clone(ISagaData sagaData)
     {
-        var serializedObject = JsonConvert.SerializeObject(sagaData, _serializerSettings);
-        return JsonConvert.DeserializeObject<ISagaData>(serializedObject, _serializerSettings);
+        var serializedObject = _sagaSerializer.SerializeToString(sagaData);
+        return _sagaSerializer.DeserializeFromString(sagaData.GetType(), serializedObject);
     }
 
     static Guid GetId(ISagaData sagaData)

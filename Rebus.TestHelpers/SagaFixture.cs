@@ -30,7 +30,7 @@ public static class SagaFixture
     /// requires any parameters to be created, use the <see cref="For{TSagaHandler}(Func{TSagaHandler}, int, bool)"/> overload that
     /// accepts a factory function as a saga handler instance creator
     /// </summary>
-    public static SagaFixture<TSagaHandler> For<TSagaHandler>() where TSagaHandler : Saga, IHandleMessages, new()
+    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<ISagaSerializer> sagaSerializerFactory = null) where TSagaHandler : Saga, IHandleMessages, new()
     {
         TSagaHandler HandlerFactory()
         {
@@ -44,34 +44,34 @@ public static class SagaFixture
             }
         }
 
-        return For(HandlerFactory);
+        return For(HandlerFactory, sagaSerializerFactory: sagaSerializerFactory);
     }
 
     /// <summary>
     /// Creates a saga fixture for the specified saga handler, which will be instantiated by the given factory method
     /// </summary>
-    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<TSagaHandler> sagaHandlerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false) where TSagaHandler : Saga, IHandleMessages
+    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<TSagaHandler> sagaHandlerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false, Func<ISagaSerializer> sagaSerializerFactory = null) where TSagaHandler : Saga, IHandleMessages
     {
         if (sagaHandlerFactory == null) throw new ArgumentNullException(nameof(sagaHandlerFactory));
 
         var activator = new BuiltinHandlerActivator();
         activator.Register(sagaHandlerFactory);
-
-        return For<TSagaHandler>(() => Configure.With(activator), maxDeliveryAttempts: maxDeliveryAttempts, secondLevelRetriesEnabled: secondLevelRetriesEnabled);
+        sagaSerializerFactory = sagaSerializerFactory == null ? () => new NewtonSoftSagaSerializer() : sagaSerializerFactory;
+        return For<TSagaHandler>(() => Configure.With(activator), maxDeliveryAttempts: maxDeliveryAttempts, secondLevelRetriesEnabled: secondLevelRetriesEnabled, sagaSerializerFactory);
     }
 
     /// <summary>
     /// Creates a saga fixture for the specified saga handler, which will be instantiated by the given factory method
     /// </summary>
-    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<RebusConfigurer> configurerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false) where TSagaHandler : Saga, IHandleMessages
+    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<RebusConfigurer> configurerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false, Func<ISagaSerializer> sagaSerializerFactory = null) where TSagaHandler : Saga, IHandleMessages
     {
         if (!_loggingInfoHasBeenShown)
         {
             Console.WriteLine("Remember that the saga fixture collects all internal logs which you can access with fixture.LogEvents");
             _loggingInfoHasBeenShown = true;
         }
-
-        return new SagaFixture<TSagaHandler>(configurerFactory, maxDeliveryAttempts, secondLevelRetriesEnabled);
+        sagaSerializerFactory = sagaSerializerFactory == null ? () => new NewtonSoftSagaSerializer() : sagaSerializerFactory;
+        return new SagaFixture<TSagaHandler>(configurerFactory, maxDeliveryAttempts, secondLevelRetriesEnabled, sagaSerializerFactory);
     }
 }
 
@@ -127,13 +127,13 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
     /// </summary>
     public event Action Disposed;
 
-    internal SagaFixture(Func<RebusConfigurer> configurerFactory, int maxDeliveryAttempts, bool secondLevelRetriesEnabled)
+    internal SagaFixture(Func<RebusConfigurer> configurerFactory, int maxDeliveryAttempts, bool secondLevelRetriesEnabled, Func<ISagaSerializer> sagaSerializerFactory)
     {
         if (configurerFactory == null) throw new ArgumentNullException(nameof(configurerFactory));
 
         var network = new InMemNetwork();
 
-        _inMemorySagaStorage = new InMemorySagaStorage();
+        _inMemorySagaStorage = new InMemorySagaStorage(sagaSerializerFactory());
         _inMemorySagaStorage.Correlated += sagaData => Correlated?.Invoke(sagaData);
         _inMemorySagaStorage.CouldNotCorrelate += () => CouldNotCorrelate?.Invoke();
         _inMemorySagaStorage.Created += sagaData => Created?.Invoke(sagaData);
