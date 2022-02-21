@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Rebus.Activation;
 using Rebus.Bus;
 using Rebus.Config;
@@ -12,7 +11,6 @@ using Rebus.Retry;
 using Rebus.Retry.Simple;
 using Rebus.Sagas;
 using Rebus.TestHelpers.Internals;
-using Rebus.Time;
 using Rebus.Transport.InMem;
 using InMemorySagaStorage = Rebus.TestHelpers.Internals.InMemorySagaStorage;
 // ReSharper disable UnusedTypeParameter
@@ -25,11 +23,11 @@ namespace Rebus.TestHelpers;
 /// </summary>
 public static class SagaFixture
 {
-    internal static bool LoggingInfoHasBeenShown;
+    internal static bool _loggingInfoHasBeenShown;
 
     /// <summary>
     /// Creates a saga fixture for the specified saga handler, which must have a default constructor. If the saga handler
-    /// requires any parameters to be created, use the <see cref="For{TSagaHandler}(Func{TSagaHandler})"/> overload that
+    /// requires any parameters to be created, use the <see cref="For{TSagaHandler}(Func{TSagaHandler}, int, bool)"/> overload that
     /// accepts a factory function as a saga handler instance creator
     /// </summary>
     public static SagaFixture<TSagaHandler> For<TSagaHandler>() where TSagaHandler : Saga, IHandleMessages, new()
@@ -67,10 +65,10 @@ public static class SagaFixture
     /// </summary>
     public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<RebusConfigurer> configurerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false) where TSagaHandler : Saga, IHandleMessages
     {
-        if (!LoggingInfoHasBeenShown)
+        if (!_loggingInfoHasBeenShown)
         {
             Console.WriteLine("Remember that the saga fixture collects all internal logs which you can access with fixture.LogEvents");
-            LoggingInfoHasBeenShown = true;
+            _loggingInfoHasBeenShown = true;
         }
 
         return new SagaFixture<TSagaHandler>(configurerFactory, maxDeliveryAttempts, secondLevelRetriesEnabled);
@@ -213,13 +211,9 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
 
-        using var resetEvent = new ManualResetEvent(false);
-
-        _lockStepper.AddResetEvent(resetEvent);
-
         _bus.Advanced.SyncBus.SendLocal(message, optionalHeaders);
 
-        if (!resetEvent.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
+        if (!_lockStepper.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
         {
             throw new TimeoutException($"Message {message} did not seem to have been processed withing {deliveryTimeoutSeconds} s timeout");
         }
@@ -249,10 +243,6 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
         if (message == null) throw new ArgumentNullException(nameof(message));
         if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-        using var resetEvent = new ManualResetEvent(false);
-
-        _lockStepper.AddResetEvent(resetEvent);
-
         var headers = optionalHeaders?.Clone() ?? new Dictionary<string, string>();
 
         var exceptionId = _secondLevelDispatcher.PrepareException(exception);
@@ -261,9 +251,9 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
 
         _bus.Advanced.SyncBus.SendLocal(message, headers);
 
-        if (!resetEvent.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
+        if (!_lockStepper.WaitOne(TimeSpan.FromSeconds(deliveryTimeoutSeconds)))
         {
-            throw new TimeoutException($"Message {message} did not seem to have been processed within {deliveryTimeoutSeconds} s timeout");
+            throw new TimeoutException($"Message {message} did not seem to have been processed withing {deliveryTimeoutSeconds} s timeout");
         }
     }
 
@@ -298,7 +288,8 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
         try
         {
             _bus.Dispose();
-
+            _lockStepper?.Dispose();
+            
             Disposed?.Invoke();
         }
         finally
