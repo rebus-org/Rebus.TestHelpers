@@ -32,7 +32,7 @@ public static class SagaFixture
     /// requires any parameters to be created, use the <see cref="For{TSagaHandler}(Func{TSagaHandler})"/> overload that
     /// accepts a factory function as a saga handler instance creator
     /// </summary>
-    public static SagaFixture<TSagaHandler> For<TSagaHandler>() where TSagaHandler : Saga, IHandleMessages, new()
+    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<ISagaSerializer> sagaSerializerFactory = null) where TSagaHandler : Saga, IHandleMessages, new()
     {
         TSagaHandler HandlerFactory()
         {
@@ -46,33 +46,33 @@ public static class SagaFixture
             }
         }
 
-        return For(HandlerFactory);
+        return For(HandlerFactory, sagaSerializerFactory: sagaSerializerFactory);
     }
 
     /// <summary>
     /// Creates a saga fixture for the specified saga handler, which will be instantiated by the given factory method
     /// </summary>
-    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<TSagaHandler> sagaHandlerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false, Func<ISagaSerializer> sagaSerializerFactoryOrNull = null) where TSagaHandler : Saga, IHandleMessages
+    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<TSagaHandler> sagaHandlerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false, Func<ISagaSerializer> sagaSerializerFactory = null) where TSagaHandler : Saga, IHandleMessages
     {
         if (sagaHandlerFactory == null) throw new ArgumentNullException(nameof(sagaHandlerFactory));
 
         var activator = new BuiltinHandlerActivator();
         activator.Register(sagaHandlerFactory);
-        var sagaSerializerFactory = sagaSerializerFactoryOrNull == null ? () => new NewtonSoftSagaSerializer() : sagaSerializerFactoryOrNull;
+        sagaSerializerFactory = sagaSerializerFactory == null ? () => new NewtonSoftSagaSerializer() : sagaSerializerFactory;
         return For<TSagaHandler>(() => Configure.With(activator), maxDeliveryAttempts: maxDeliveryAttempts, secondLevelRetriesEnabled: secondLevelRetriesEnabled, sagaSerializerFactory);
     }
 
     /// <summary>
     /// Creates a saga fixture for the specified saga handler, which will be instantiated by the given factory method
     /// </summary>
-    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<RebusConfigurer> configurerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false, Func<ISagaSerializer> sagaSerializerFactoryOrNull = null) where TSagaHandler : Saga, IHandleMessages
+    public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<RebusConfigurer> configurerFactory, int maxDeliveryAttempts = 5, bool secondLevelRetriesEnabled = false, Func<ISagaSerializer> sagaSerializerFactory = null) where TSagaHandler : Saga, IHandleMessages
     {
         if (!LoggingInfoHasBeenShown)
         {
             Console.WriteLine("Remember that the saga fixture collects all internal logs which you can access with fixture.LogEvents");
             LoggingInfoHasBeenShown = true;
         }
-        var sagaSerializerFactory = sagaSerializerFactoryOrNull == null ? () => new NewtonSoftSagaSerializer() : sagaSerializerFactoryOrNull;
+        sagaSerializerFactory = sagaSerializerFactory == null ? () => new NewtonSoftSagaSerializer() : sagaSerializerFactory;
         return new SagaFixture<TSagaHandler>(configurerFactory, maxDeliveryAttempts, secondLevelRetriesEnabled, sagaSerializerFactory);
     }
 }

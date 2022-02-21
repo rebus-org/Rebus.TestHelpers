@@ -235,7 +235,7 @@ class InMemorySagaStorage : ISagaStorage
     ISagaData Clone(ISagaData sagaData)
     {
         var serializedObject = _sagaSerializer.SerializeToString(sagaData);
-        return _sagaSerializer.DeserializeFromString(typeof(ISagaData), serializedObject);
+        return _sagaSerializer.DeserializeFromString(sagaData.GetType(), serializedObject);
     }
 
     static Guid GetId(ISagaData sagaData)
