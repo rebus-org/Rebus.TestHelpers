@@ -38,6 +38,10 @@
 ## 7.0.0
 * Change API of `FakeMessageContext` to contain an `IncomingStepContext`, which makes it possible to mock more stuff (notably, the `CancellationToken` can be added)
 
+## 7.1.0
+* Add ability to customize saga serializer - thanks [hdrachmann]
+
 [fishie]: https://github.com/fishie
+[hdrachmann]: https://github.com/hdrachmann
 [mclausen]: https://github.com/mclausen
 [rsivanov]: https://github.com/rsivanov

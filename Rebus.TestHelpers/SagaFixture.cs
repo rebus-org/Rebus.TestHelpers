@@ -27,7 +27,7 @@ public static class SagaFixture
 
     /// <summary>
     /// Creates a saga fixture for the specified saga handler, which must have a default constructor. If the saga handler
-    /// requires any parameters to be created, use the <see cref="For{TSagaHandler}(Func{TSagaHandler}, int, bool)"/> overload that
+    /// requires any parameters to be created, use the <see cref="For{TSagaHandler}(Func{TSagaHandler}, int, bool, Func{ISagaSerializer})"/> overload that
     /// accepts a factory function as a saga handler instance creator
     /// </summary>
     public static SagaFixture<TSagaHandler> For<TSagaHandler>(Func<ISagaSerializer> sagaSerializerFactory = null) where TSagaHandler : Saga, IHandleMessages, new()
@@ -289,7 +289,7 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
         {
             _bus.Dispose();
             _lockStepper?.Dispose();
-            
+
             Disposed?.Invoke();
         }
         finally
