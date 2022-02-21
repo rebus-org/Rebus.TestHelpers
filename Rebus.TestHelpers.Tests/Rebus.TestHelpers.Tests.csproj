@@ -1,15 +1,19 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
- <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Rebus.TestHelpers\Rebus.TestHelpers.csproj" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
-    <PackageReference Include="nunit" Version="3.13.1" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
-    <PackageReference Include="rebus" Version="6.5.2" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
+		<PackageReference Include="nunit" Version="3.13.1" />
+		<PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
+		<PackageReference Include="rebus" Version="6.5.2" />
     <PackageReference Include="System.Text.Json" Version="6.0.2" />
-  </ItemGroup>
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Bugs\" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Rebus.TestHelpers\Rebus.TestHelpers.csproj" />
+	</ItemGroup>
 </Project>

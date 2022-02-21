@@ -1,44 +1,31 @@
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Rebus.Pipeline;
 using Rebus.Transport;
+// ReSharper disable ArgumentsStyleLiteral
 
 namespace Rebus.TestHelpers.Internals;
 
 /// <summary>
-/// Pipeline step that makes it easy to block message processing until some particular point in time.
-/// This is done by adding a <see cref="ManualResetEvent"/> to it, which will be set the next time
-/// a message has been processed
+/// Pipeline step that can be used to synchronize the processing of messages. A semaphore is used internally, which
+/// is incremented each time a message has been fully processed (either successfully or with error). The <see cref="WaitOne"/>
+/// can then be used to decrement the semaphore, thus blocking until a message has been processed.
 /// </summary>
 [StepDocumentation("Step that can be used to synchronize message processing")]
-class LockStepper : IIncomingStep
+class LockStepper : IIncomingStep, IDisposable
 {
-    readonly ConcurrentQueue<ManualResetEvent> _resetEvents = new ConcurrentQueue<ManualResetEvent>();
-
-    public void AddResetEvent(ManualResetEvent reserEvent) => _resetEvents.Enqueue(reserEvent);
+    readonly Semaphore _semaphore = new(initialCount: 0, maximumCount: int.MaxValue);
 
     public async Task Process(IncomingStepContext context, Func<Task> next)
     {
-        var resetEvents = DequeueResetEvents();
-
         context.Load<ITransactionContext>()
-            .OnDisposed(tc => resetEvents.ForEach(resetEvent => resetEvent.Set()));
+            .OnDisposed(_ => _semaphore.Release());
 
         await next();
     }
 
-    List<ManualResetEvent> DequeueResetEvents()
-    {
-        var list = new List<ManualResetEvent>();
+    public bool WaitOne(TimeSpan timeout) => _semaphore.WaitOne(timeout: timeout);
 
-        while (_resetEvents.TryDequeue(out var resetEvent))
-        {
-            list.Add(resetEvent);
-        }
-
-        return list;
-    }
+    public void Dispose() => _semaphore?.Dispose();
 }

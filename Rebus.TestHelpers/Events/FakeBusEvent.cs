@@ -1,5 +1,4 @@
 ﻿using System;
-using Rebus.Time;
 
 namespace Rebus.TestHelpers.Events;
 
