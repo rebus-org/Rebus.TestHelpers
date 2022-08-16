@@ -41,6 +41,9 @@
 ## 7.1.0
 * Add ability to customize saga serializer - thanks [hdrachmann]
 
+## 7.1.1
+* Expose parameters with default arguments on the generic saga fixture factory method
+
 [fishie]: https://github.com/fishie
 [hdrachmann]: https://github.com/hdrachmann
 [mclausen]: https://github.com/mclausen

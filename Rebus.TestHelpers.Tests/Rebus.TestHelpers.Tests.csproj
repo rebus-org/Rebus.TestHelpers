@@ -11,9 +11,6 @@
 		<PackageReference Include="System.Text.Json" Version="6.0.2" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Bugs\" />
-	</ItemGroup>
-	<ItemGroup>
 		<ProjectReference Include="..\Rebus.TestHelpers\Rebus.TestHelpers.csproj" />
 	</ItemGroup>
 </Project>
