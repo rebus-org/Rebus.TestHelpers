@@ -17,7 +17,6 @@ namespace Rebus.TestHelpers.Internals;
 class InMemorySagaStorage : ISagaStorage
 {
     readonly ConcurrentDictionary<Guid, ISagaData> _data = new();
-    readonly ConcurrentDictionary<Guid, ISagaData> _previousDatas = new();
     readonly object _lock = new();
     readonly ISagaSerializer _sagaSerializer;
     public InMemorySagaStorage(ISagaSerializer sagaSerializer)
@@ -60,12 +59,17 @@ class InMemorySagaStorage : ISagaStorage
 
     public void PrepareConflict(ISagaData sagaData)
     {
-        if (!_previousDatas.ContainsKey(sagaData.Id))
+        if (!_data.TryGetValue(sagaData.Id, out var existing))
         {
-            throw new ArgumentException($"Cannot prepare conflict for saga data of type {sagaData.GetType()} and ID {sagaData.Id}, because there's no previous version stored");
+            throw new ArgumentException($"Cannot prepare conflict for saga data of type {sagaData.GetType()} and ID {sagaData.Id}, because that saga data instance is unknown");
         }
 
-        _sagaDatasToCauseConflict[sagaData.Id] = sagaData;
+        var clone = Clone(sagaData);
+
+        // make the clone be one update ahead
+        clone.Revision = existing.Revision + 1;
+
+        _sagaDatasToCauseConflict[sagaData.Id] = clone;
     }
 
     /// <summary>
@@ -88,17 +92,24 @@ class InMemorySagaStorage : ISagaStorage
                 {
                     var id = data.Id;
 
-                    if (_sagaDatasToCauseConflict.ContainsKey(id))
+                    if (_sagaDatasToCauseConflict.TryGetValue(id, out var conflictingSagaData))
                     {
-                        if (!_previousDatas.TryGetValue(id, out var previousSagaData))
-                        {
-                            throw new ArgumentException($"Sorry, but weirdly the saga data ID {id} could not be found in the storage for previous saga data versions");
-                        }
-                        var cloneOfPreviousSagaData = Clone(previousSagaData);
                         _sagaDatasToCauseConflict.TryRemove(id, out _);
-                        Correlated?.Invoke(cloneOfPreviousSagaData);
-                        return cloneOfPreviousSagaData;
+                        Correlated?.Invoke(conflictingSagaData);
+                        return conflictingSagaData;
                     }
+
+                    //if (_sagaDatasToCauseConflict.ContainsKey(id))
+                    //{
+                    //    if (!_previousDatas.TryGetValue(id, out var previousSagaData))
+                    //    {
+                    //        throw new ArgumentException($"Sorry, but weirdly the saga data ID {id} could not be found in the storage for previous saga data versions");
+                    //    }
+                    //    var cloneOfPreviousSagaData = Clone(previousSagaData);
+                    //    _sagaDatasToCauseConflict.TryRemove(id, out _);
+                    //    Correlated?.Invoke(cloneOfPreviousSagaData);
+                    //    return cloneOfPreviousSagaData;
+                    //}
 
                     var clone = Clone(data);
                     Correlated?.Invoke(clone);
@@ -187,9 +198,9 @@ class InMemorySagaStorage : ISagaStorage
 
             if (_data.TryRemove(id, out var previousSagaData))
             {
-                _previousDatas[id] = previousSagaData;
                 Deleted?.Invoke(previousSagaData);
             }
+
             sagaData.Revision++;
         }
     }
@@ -219,20 +230,10 @@ class InMemorySagaStorage : ISagaStorage
     {
         var id = sagaData.Id;
 
-        if (_data.TryGetValue(id, out var previousSagaData))
-        {
-            _previousDatas[id] = previousSagaData;
-        }
-        else
-        {
-            // if we haven't stored the previous version of the saga data, we do so here
-            _previousDatas[id] = sagaData;
-        }
-
         _data[id] = sagaData;
     }
 
-    ISagaData Clone(ISagaData sagaData)
+    internal ISagaData Clone(ISagaData sagaData)
     {
         var serializedObject = _sagaSerializer.SerializeToString(sagaData);
         return _sagaSerializer.DeserializeFromString(sagaData.GetType(), serializedObject);

@@ -14,6 +14,7 @@ using Rebus.TestHelpers.Internals;
 using Rebus.Transport.InMem;
 using InMemorySagaStorage = Rebus.TestHelpers.Internals.InMemorySagaStorage;
 // ReSharper disable UnusedTypeParameter
+// ReSharper disable UnusedMember.Global
 
 namespace Rebus.TestHelpers;
 
@@ -220,18 +221,106 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
     }
 
     /// <summary>
-    /// Finds the saga data instances that match the given predicate and marks them, so that they cause an update conflict on the next update.
+    /// Sets up a saga update conflict for all saga data instances matching the given <paramref name="predicate"/>.
+    /// The <paramref name="createConflictingSagaData"/> callback will be invoked with a clone of each found instance, which can then be mutated into
+    /// the conflicting instance.
     /// </summary>
-    public void PrepareConflict<TSagaData>(Func<TSagaData, bool> sagaDataSelectionPredicate) where TSagaData : ISagaData
+    public void PrepareConflict<TSagaData>(Func<TSagaData, bool> predicate, Action<TSagaData> createConflictingSagaData) where TSagaData : ISagaData
     {
-        var matches = Data.OfType<TSagaData>()
-            .Where(sagaDataSelectionPredicate)
-            .ToList();
+        if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+        if (createConflictingSagaData == null) throw new ArgumentNullException(nameof(createConflictingSagaData));
 
-        foreach (var match in matches)
+        var sagaDataIds = Data.OfType<TSagaData>().Where(predicate).Select(s => s.Id).ToList();
+
+        foreach (var id in sagaDataIds)
         {
-            _inMemorySagaStorage.PrepareConflict(match);
+            PrepareConflict(id, createConflictingSagaData);
         }
+    }
+
+    /// <summary>
+    /// Sets up a saga update conflict for all saga data instances matching the given <paramref name="predicate"/>.
+    /// The <paramref name="getConflictingSagaData"/> callback will be invoked with a clone of each found instance, which should then return a
+    /// new and/or mutated instance that will be the conflicting instance.
+    /// </summary>
+    public void PrepareConflict<TSagaData>(Func<TSagaData, bool> predicate, Func<TSagaData, TSagaData> getConflictingSagaData) where TSagaData : ISagaData
+    {
+        if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+        if (getConflictingSagaData == null) throw new ArgumentNullException(nameof(getConflictingSagaData));
+
+        var sagaDataIds = Data.OfType<TSagaData>().Where(predicate).Select(s => s.Id).ToList();
+
+        foreach (var id in sagaDataIds)
+        {
+            PrepareConflict(id, getConflictingSagaData);
+        }
+    }
+
+    /// <summary>
+    /// Sets up a saga update conflict for the saga data instance matching the given <paramref name="sagaDataId"/>.
+    /// The <paramref name="createConflictingSagaData"/> callback will be invoked with a clone of the instance, which can then be mutated into
+    /// the conflicting instance.
+    /// </summary>
+    public void PrepareConflict<TSagaData>(Guid sagaDataId, Action<TSagaData> createConflictingSagaData) where TSagaData : ISagaData
+    {
+        PrepareConflict<TSagaData>(sagaDataId, existing =>
+        {
+            var clone = (TSagaData)_inMemorySagaStorage.Clone(existing);
+            createConflictingSagaData(clone);
+            return clone;
+        });
+    }
+
+    /// <summary>
+    /// Sets up a saga update conflict for the saga data instance matching the given <paramref name="sagaDataId"/>.
+    /// The <paramref name="getConflictingSagaData"/> callback will be invoked with a clone of the instance, which should then return a
+    /// new and/or mutated instance that will be the conflicting instance.
+    /// </summary>
+    public void PrepareConflict<TSagaData>(Guid sagaDataId, Func<TSagaData, TSagaData> getConflictingSagaData) where TSagaData : ISagaData
+    {
+        if (getConflictingSagaData == null) throw new ArgumentNullException(nameof(getConflictingSagaData));
+
+        var existing = Data.OfType<TSagaData>().FirstOrDefault(s => s.Id == sagaDataId);
+
+        if (existing == null)
+        {
+            throw new ArgumentException(
+                $@"Could not find an existing saga data of type {typeof(TSagaData)} with ID {sagaDataId}. 
+
+To simulate a conflict, you'll need to ensure that a saga data instance with the relevant type/ID is available, and THEN prepare the conflict.
+
+You can create a saga data instance by setting it up manually:
+
+    fixture.Add(sagaDataInstance);
+
+or you can do it 'naturally', by delivering the relevant initiation message to the saga:
+
+    fixture.Deliver(new SomethingThatInitiatesTheSaga());
+
+which then requires that you snatch batch the ID of the resulting saga data:");
+
+        }
+
+        PrepareConflictInternal(existing, getConflictingSagaData);
+    }
+
+    void PrepareConflictInternal<TSagaData>(TSagaData existing, Func<TSagaData, TSagaData> getConflictingSagaData) where TSagaData : ISagaData
+    {
+        var conflicting = getConflictingSagaData((TSagaData)_inMemorySagaStorage.Clone(existing));
+
+        if (conflicting.Id != existing.Id)
+        {
+            throw new InvalidOperationException(
+                "It's not possible to change the ID of the saga data when preparing the conflict, because that would change the meaning of it all.");
+        }
+
+        if (conflicting.Revision != existing.Revision)
+        {
+            throw new InvalidOperationException(
+                "It's not possible to change the Revision of the saga data when preparing the conflict – the revision number of the conflicting saga data will automatically be incremented so that it causes a conflict on the next update attempt.");
+        }
+
+        _inMemorySagaStorage.PrepareConflict(conflicting);
     }
 
     /// <summary>

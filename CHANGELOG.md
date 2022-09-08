@@ -44,6 +44,9 @@
 ## 7.1.1
 * Expose parameters with default arguments on the generic saga fixture factory method
 
+## 7.2.0
+* Change how saga conflicts are simulated to enable staging conflicting data, thus making it possible to test conflicts in a much more realisting fashion
+
 [fishie]: https://github.com/fishie
 [hdrachmann]: https://github.com/hdrachmann
 [mclausen]: https://github.com/mclausen
