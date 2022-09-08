@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using Rebus.Handlers;
 using Rebus.Sagas;
 using Rebus.TestHelpers.Tests.Extensions;
 // ReSharper disable UnusedAutoPropertyAccessor.Local

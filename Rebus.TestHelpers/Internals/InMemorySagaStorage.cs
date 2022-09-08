@@ -16,9 +16,9 @@ namespace Rebus.TestHelpers.Internals;
 /// </summary>
 class InMemorySagaStorage : ISagaStorage
 {
-    readonly ConcurrentDictionary<Guid, ISagaData> _data = new ConcurrentDictionary<Guid, ISagaData>();
-    readonly ConcurrentDictionary<Guid, ISagaData> _previousDatas = new ConcurrentDictionary<Guid, ISagaData>();
-    readonly object _lock = new object();
+    readonly ConcurrentDictionary<Guid, ISagaData> _data = new();
+    readonly ConcurrentDictionary<Guid, ISagaData> _previousDatas = new();
+    readonly object _lock = new();
     readonly ISagaSerializer _sagaSerializer;
     public InMemorySagaStorage(ISagaSerializer sagaSerializer)
     {
@@ -55,7 +55,7 @@ class InMemorySagaStorage : ISagaStorage
     internal event Action<ISagaData> Correlated;
     internal event Action CouldNotCorrelate;
 
-    readonly ConcurrentDictionary<Guid, ISagaData> _sagaDatasToCauseConflict = new ConcurrentDictionary<Guid, ISagaData>();
+    readonly ConcurrentDictionary<Guid, ISagaData> _sagaDatasToCauseConflict = new();
 
 
     public void PrepareConflict(ISagaData sagaData)
