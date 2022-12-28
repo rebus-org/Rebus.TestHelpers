@@ -47,6 +47,9 @@
 ## 7.2.0
 * Change how saga conflicts are simulated to enable staging conflicting data, thus making it possible to test conflicts in a much more realisting fashion
 
+## 8.0.0
+* Update Rebus dependency to 7 - thanks [mclausen]
+
 [fishie]: https://github.com/fishie
 [hdrachmann]: https://github.com/hdrachmann
 [mclausen]: https://github.com/mclausen
