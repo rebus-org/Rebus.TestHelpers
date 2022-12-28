@@ -35,8 +35,8 @@ class SecondLevelDispatcher : IIncomingStep
 
             var messageId = headers.GetValue(Headers.MessageId);
 
-            _errorTracker.RegisterError(messageId, exception);
-            _errorTracker.MarkAsFinal(messageId);
+            await _errorTracker.RegisterError(messageId, exception);
+            await _errorTracker.MarkAsFinal(messageId);
         }
 
         await next();
