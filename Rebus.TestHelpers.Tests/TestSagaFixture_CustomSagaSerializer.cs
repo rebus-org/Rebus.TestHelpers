@@ -5,21 +5,17 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using Rebus.Exceptions;
 using Rebus.Sagas;
+
 #pragma warning disable 1998
 
 namespace Rebus.TestHelpers.Tests;
 
-
 [TestFixture]
-public class TestSagaFixture_CustomSerializer : FixtureBase
+public class TestSagaFixture_CustomSagaSerializer : FixtureBase
 {
-
-
-
     [Test]
     public void CanRetrieveSagaData()
     {
-
         using var fixture = SagaFixture.For<MySaga>(() => new MicrosoftSagaSerializer());
 
         fixture.Deliver(new TestMessage("hej"));
