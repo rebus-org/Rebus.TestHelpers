@@ -19,13 +19,9 @@ public class TestSagaFixture_CustomMessageSerializer : FixtureBase
     [Test]
     public async Task CanSerializeMessagesWithSomethingElse()
     {
-        var settings = new JsonSerializerSettings
-        {
-            ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
-        };
-
-        RebusConfigurer GetConfigurer() => Configure.With(new BuiltinHandlerActivator())
-            .Serialization(s => s.UseNewtonsoftJson(settings: settings));
+        static RebusConfigurer GetConfigurer() => Configure
+            .With(new BuiltinHandlerActivator())
+            .Serialization(s => s.UseNewtonsoftJson());
 
         using var fixture = SagaFixture.For<SomeSaga>(GetConfigurer);
 
