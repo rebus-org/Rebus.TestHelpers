@@ -50,6 +50,9 @@
 ## 8.0.0
 * Update Rebus dependency to 7 - thanks [mclausen]
 
+## 9.0.0-alpha1
+* Update Rebus dependency to 8
+
 [fishie]: https://github.com/fishie
 [hdrachmann]: https://github.com/hdrachmann
 [mclausen]: https://github.com/mclausen

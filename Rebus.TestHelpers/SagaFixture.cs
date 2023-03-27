@@ -174,7 +174,7 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
                     var pipeline = c.Get<IPipeline>();
 
                     return new PipelineStepInjector(pipeline)
-                        .OnReceive(_exceptionCollector, PipelineRelativePosition.After, typeof(SimpleRetryStrategyStep));
+                        .OnReceive(_exceptionCollector, PipelineRelativePosition.After, typeof(DefaultRetryStep));
                 });
 
                 o.Decorate<IPipeline>(c =>
@@ -184,7 +184,7 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
                     _secondLevelDispatcher = new SecondLevelDispatcher(c.Get<IErrorTracker>());
 
                     return new PipelineStepInjector(pipeline)
-                        .OnReceive(_secondLevelDispatcher, PipelineRelativePosition.Before, typeof(SimpleRetryStrategyStep));
+                        .OnReceive(_secondLevelDispatcher, PipelineRelativePosition.Before, typeof(DefaultRetryStep));
                 });
             })
             .Start();
