@@ -156,7 +156,7 @@ public class SagaFixture<TSagaHandler> : IDisposable where TSagaHandler : Saga
                 o.SetNumberOfWorkers(1);
                 o.SetMaxParallelism(1);
 
-                o.SimpleRetryStrategy(
+                o.RetryStrategy(
                     maxDeliveryAttempts: maxDeliveryAttempts,
                     secondLevelRetriesEnabled: secondLevelRetriesEnabled
                 );
