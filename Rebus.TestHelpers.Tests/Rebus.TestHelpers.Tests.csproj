@@ -13,4 +13,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Rebus.TestHelpers\Rebus.TestHelpers.csproj" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Examples\" />
+	</ItemGroup>
 </Project>

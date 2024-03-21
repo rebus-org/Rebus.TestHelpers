@@ -53,6 +53,9 @@
 ## 9.0.0
 * Update Rebus dependency to 8
 
+## 9.1.0
+* Add `FakeMessageContextScope` to make it easier to fake a message context so that `MessageContext.Current` will return something
+
 [fishie]: https://github.com/fishie
 [hdrachmann]: https://github.com/hdrachmann
 [mclausen]: https://github.com/mclausen
