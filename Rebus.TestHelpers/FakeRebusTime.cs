@@ -8,6 +8,8 @@ namespace Rebus.TestHelpers;
 /// </summary>
 public class FakeRebusTime : IRebusTime
 {
+    readonly Random _random = new(DateTime.Now.GetHashCode());
+
     Func<DateTimeOffset> _fakeTimeFactory = () => DateTimeOffset.Now;
 
     /// <inheritdoc />
@@ -25,15 +27,18 @@ public class FakeRebusTime : IRebusTime
         _fakeTimeFactory = () =>
         {
             var timeToReturn = time;
+            
             if (driftSlightly)
             {
-                time = time.AddTicks(17);
+                time = time.AddTicks(_random.Next(17) + 1);
             }
 
             return timeToReturn;
         };
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Resets the fake <see cref="IRebusTime"/> back to returning <see cref="DateTimeOffset.Now"/>
+    /// </summary>
     public void Reset() => _fakeTimeFactory = () => DateTimeOffset.Now;
 }
