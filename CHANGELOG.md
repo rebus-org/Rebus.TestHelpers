@@ -59,7 +59,11 @@
 ## 9.2.0
 * Add ability to configure a global customizer on `SagaFixture` by calling `SetGlobalCustomizer`. The customizer is a normal `RebusConfigurer` callback, which makes it easy to call own extension methods, set the message serializer, etc.
 
+## 9.3.0
+* Update to Rebus 8.9.0 and deps to work - thanks [hjalle]
+
 [fishie]: https://github.com/fishie
 [hdrachmann]: https://github.com/hdrachmann
 [mclausen]: https://github.com/mclausen
 [rsivanov]: https://github.com/rsivanov
+[hjalle]: https://github.com/hjalle
