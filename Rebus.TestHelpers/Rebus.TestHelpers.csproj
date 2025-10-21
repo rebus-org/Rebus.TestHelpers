@@ -27,6 +27,6 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="rebus" Version="8.4.4" />
+		<PackageReference Include="rebus" Version="8.9.0" />
 	</ItemGroup>
 </Project>
